@@ -1,0 +1,1 @@
+rootProject.name = "LightLog_BE"

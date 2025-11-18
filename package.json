@@ -1,0 +1,9 @@
+{
+  "name": "lightlog-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "frontend": "cd LightLog_FE && npm start",
+    "backend": "cd LightLog_BE && ./gradlew bootRun"
+  }
+}

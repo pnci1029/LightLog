@@ -1,20 +1,37 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import Header from './src/components/common/Header';
+import DiaryCard from './src/components/home/DiaryCard';
+import FloatingActionButton from './src/components/common/FloatingActionButton';
+import { theme } from './src/theme/theme';
+
+// Helper to get current date in YYYY년 MM월 DD일 format
+const getFormattedDate = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year}년 ${month}월 ${day}일`;
+};
 
 export default function App() {
+  const handleFabPress = () => {
+    // Navigate to DiaryWriteScreen in the future
+    console.log('FAB pressed!');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>LightLog</Text>
-      </View>
+      <StatusBar style="dark" />
+      <Header title="LightLog" />
+
       <View style={styles.content}>
-        <Text style={styles.developmentText}>개발 중입니다.</Text>
-        <Text style={styles.welcomeText}>Welcome to LightLog!</Text>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Start Logging</Text>
-        </TouchableOpacity>
+        <Text style={styles.dateText}>{getFormattedDate()}</Text>
+        <Text style={styles.welcomeMessage}>오늘 하루는 어땠나요? 가볍게 기록해봐요.</Text>
+        <DiaryCard />
       </View>
-      <StatusBar style="auto" />
+
+      <FloatingActionButton onPress={handleFabPress} />
     </SafeAreaView>
   );
 }
@@ -22,43 +39,23 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  header: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    alignItems: 'center',
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    backgroundColor: theme.background,
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 20,
   },
-  developmentText: {
-    fontSize: 24,
+  dateText: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: 'red',
-    marginBottom: 20,
+    color: theme.text,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  welcomeText: {
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: '#fff',
+  welcomeMessage: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: theme.text,
+    textAlign: 'center',
+    marginBottom: 30,
   },
 });

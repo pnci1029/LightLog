@@ -1,6 +1,6 @@
 # LightLog 프론트엔드 상세 기획서
 
-**문서 버전: 1.0.0**
+**문서 버전: 1.1.0**
 
 ## 1. 서비스 개요 및 목표
 
@@ -18,7 +18,7 @@ LightLog는 사용자에게 **매일 감성적인 알림을 보내 일기 작성
 
 ### 2.2. 시그니처 컬러 및 폰트
 
-기존 제안된 내용을 따르며, 개발 시 `src/styles` 또는 `src/theme` 디렉토리에 `colors.ts`, `fonts.ts` 등으로 스타일 코드를 중앙 관리한다.
+개발 시 `src/styles` 또는 `src/theme` 디렉토리에 `colors.ts`, `fonts.ts` 등으로 스타일 코드를 중앙 관리한다.
 
 *   **기본 컬러 팔레트 (Theme 1: Soft Blue)**:
     *   Signature Soft Blue: `#AFCBFF`
@@ -37,95 +37,62 @@ LightLog는 사용자에게 **매일 감성적인 알림을 보내 일기 작성
 *   **폰트**:
     *   본문: `Pretendard`
     *   UI 요소: `SUIT`
-    *   포인트: `Cafe24 Oneprettynight`
+    *   포인트: `Cafe24Oneprettynight`
 
 ---
 
-## 3. 화면 및 기능 명세
+## 3. 화면 및 기능 명세 (v1.1: 메인 화면 개편)
 
 ### 3.1. 네비게이션 구조 (React Navigation)
 
 - **AppNavigator (Root)**
   - `AuthLoadingScreen`: 앱 실행 시 토큰 유효성 검사 후 스택 이동
   - **AuthStack (인증)**
-    - `LoginScreen`: 로그인
-    - `RegisterScreen`: 회원가입
+    - `LoginScreen`, `RegisterScreen`
   - **MainTab (메인)**
-    - `HomeScreen`: 오늘 일기 작성 유도 및 최신 일기 표시
+    - `HomeScreen`: 어제의 AI 요약 또는 온보딩 제공
     - `CalendarScreen`: 월별 캘린더 뷰
     - `SettingsScreen`: 설정
   - **DiaryStack (일기 관련)** (Modal로 동작)
     - `DiaryWriteScreen`: 일기 작성/수정
-    - `DiaryDetailScreen`: 특정 일기 상세 보기 (원본 + AI 해석)
+    - `DiaryDetailScreen`: 특정 일기 상세 보기
+  - **YesterdaySummaryModal (온보딩)** (Modal로 동작)
+    - 전날 기록이 없을 경우 `HomeScreen` 진입 시 자동으로 실행
 
 ### 3.2. 화면별 상세 명세
 
-#### 1) AuthLoadingScreen
-- **역할**: 로컬 저장소(AsyncStorage)의 JWT 토큰 확인
-- **기능**:
-  - 토큰 유효 시 → `MainTab`으로 이동
-  - 토큰 무효/없음 시 → `AuthStack`으로 이동
-
-#### 2) LoginScreen / RegisterScreen
-- **역할**: 사용자 인증
-- **컴포넌트**:
-  - `AuthTitle`: "LightLog" 로고 또는 타이틀
-  - `EmailInput`, `PasswordInput`
-  - `PrimaryButton`: "로그인" / "회원가입"
-  - `SecondaryButton`: "계정이 없으신가요?" / "로그인으로 돌아가기"
-
-#### 3) HomeScreen (MainTab)
-- **역할**: 앱의 메인 랜딩, 일기 작성 유도
+#### 1) HomeScreen (MainTab)
+- **역할**: 어제의 긍정적 경험을 제공하고, 오늘의 기록을 자연스럽게 유도하는 핵심 랜딩 화면.
+- **주요 로직**:
+  1. 화면 진입 시, 사용자의 전날 일기 데이터 유무를 확인한다.
+  2. **데이터가 있는 경우**: 전날 일기를 기반으로 생성된 AI의 긍정적 재해석 결과를 `AIResultView`에 보여준다.
+  3. **데이터가 없는 경우 (신규 사용자 포함)**: `YesterdaySummaryModal`을 자동으로 띄워 사용자 온보딩 및 데이터 수집을 진행한다. 모달에서 생성된 요약 결과를 `AIResultView`에 표시한다.
 - **컴포넌트**:
   - `Header`: "LightLog"
-  - `DateDisplay`: "YYYY년 MM월 DD일"
-  - `WelcomeMessage`: "오늘 하루는 어땠나요? 가볍게 기록해봐요."
-  - `DiaryCard`: 오늘 작성한 일기가 있다면 표시 (없으면 "오늘의 일기를 작성해보세요" 메시지)
-  - `FloatingActionButton`: 일기 작성 화면(`DiaryWriteScreen`)으로 이동
+  - `AIResultView`: 어제의 AI 요약 결과가 표시되는 메인 콘텐츠 영역. 카드 형태의 UI.
+  - `FloatingActionButton`: 오늘의 일기 작성 화면(`DiaryWriteScreen`)으로 이동.
 
-#### 4) CalendarScreen (MainTab)
-- **역할**: 월별 일기 기록 조회
+#### 2) YesterdaySummaryModal (Modal)
+- **역할**: 신규 사용자 또는 전날 기록이 없는 사용자를 위한 온보딩 및 간단한 데이터 수집.
+- **기능**: 사용자가 몇 가지 선택만으로 어제 하루를 요약하고, 앱의 핵심 가치를 즉시 체험하게 한다.
 - **컴포넌트**:
-  - `Header`: "돌아보기"
-  - `CalendarView`: 일기가 작성된 날짜에 점(dot) 또는 다른 시각적 표시
-  - `DiaryPreviewList`: 특정 날짜 선택 시 하단에 해당 일기 요약 표시
-  - 날짜 선택 시 `DiaryDetailScreen`으로 이동
+  - `ModalTitle`: "어제는 어떤 하루였나요?"
+  - `Checklist`: 어제 한 일을 나타내는 선택 가능한 키워드 목록. (예: "업무/공부에 집중했어요", "좋은 사람과 대화했어요", "휴식을 취했어요", "사소한 실수를 했어요")
+  - `PrimaryButton`: "하루 요약 보기" (선택된 키워드를 서버로 보내 AI 요약 요청)
 
-#### 5) SettingsScreen (MainTab)
-- **역할**: 앱 설정
-- **컴포넌트**:
-  - `Header`: "설정"
-  - `SettingItem`: "알림 설정", "로그아웃", "회원 탈퇴" 등 메뉴 리스트
-  - `ToggleSwitch`: 알림 ON/OFF
-
-#### 6) DiaryWriteScreen (Modal)
-- **역할**: 일기 작성 및 수정
-- **컴포넌트**:
-  - `Header`: "기록하기" (저장 버튼 포함)
-  - `DateDisplay`: 작성 날짜
-  - `MoodSelector`: 오늘 기분을 나타내는 이모지/슬라이더
-  - `TextInput`: 여러 줄 입력 가능한 일기 입력창
-  - `AIAnalyzeButton`: "AI에게 위로받기" 버튼 (저장 후 실행)
-
-#### 7) DiaryDetailScreen
-- **역할**: 특정 일기 상세 조회
-- **컴포넌트**:
-  - `Header`: "YYYY년 MM월 DD일의 기록"
-  - `OriginalDiaryView`: 사용자가 작성한 원본 일기
-  - `AIDiaryView`: AI가 재해석한 긍정 버전 (카드 형태, 다른 배경색 적용)
-  - `AIFeedback`: AI의 짧은 감정 피드백
+#### 3) CalendarScreen, SettingsScreen, Diary-related Screens
+- 기존 기획과 동일
 
 ---
 
 ## 4. 컴포넌트 아키텍처
 
 - `src/components` 디렉토리 하위에 기능별로 컴포넌트를 분리한다.
-- **`common/`**: 앱 전반에서 사용되는 원자 단위 컴포넌트
-  - `Button.tsx`, `Input.tsx`, `Card.tsx`, `Header.tsx`, `Icon.tsx`
-- **`diary/`**: 일기 관련 복합 컴포넌트
-  - `DiaryCard.tsx`, `MoodSelector.tsx`
-- **`calendar/`**: 캘린더 관련 컴포넌트
-  - `CalendarView.tsx`
+- **`common/`**: `Button.tsx`, `Input.tsx`, `Card.tsx`, `Header.tsx`, `Icon.tsx`
+- **`home/`**: 홈 화면 관련 복합 컴포넌트
+  - `AIResultView.tsx`: AI 요약 결과를 보여주는 카드 UI
+  - `YesterdayChecklist.tsx`: 온보딩 모달 내 선택지 컴포넌트
+- **`diary/`**, **`calendar/`**: 기존 기획과 동일
 
 ---
 
@@ -134,33 +101,24 @@ LightLog는 사용자에게 **매일 감성적인 알림을 보내 일기 작성
 `src/stores` 디렉토리에서 상태 로직을 중앙 관리한다.
 
 ### 5.1. `authStore`
-- **state**: `isLoggedIn`, `accessToken`, `userProfile`
-- **actions**: `login()`, `logout()`, `register()`, `loadToken()`
+- 기존 기획과 동일
 
 ### 5.2. `diaryStore`
-- **state**: `diaries` (월별 또는 전체 목록), `selectedDiary`
-- **actions**: `fetchDiaries()`, `createDiary()`, `updateDiary()`, `deleteDiary()`, `analyzeDiary()`
+- **state**: `diaries`, `selectedDiary`, `yesterdaySummary` (어제의 AI 요약)
+- **actions**: `fetchDiaries()`, `createDiary()`, `...`, `fetchYesterdaySummary()`, `createSummaryFromChecklist()`
 
 ### 5.3. `uiStore`
-- **state**: `isLoading`, `error`, `isAILoading`
-- **actions**: `setLoading()`, `setError()`
+- **state**: `isLoading`, `error`, `showYesterdayModal` (모달 표시 여부)
+- **actions**: `setLoading()`, `setError()`, `openYesterdayModal()`, `closeYesterdayModal()`
 
 ---
 
 ## 6. API 클라이언트
 
-`src/lib/api` 또는 `src/services` 디렉토리에서 API 연동 로직을 관리한다.
+- 기존 `axios` 기반 구조를 유지하며, 신규 API 함수를 추가한다.
+- **추가 API 함수**:
+  - `getTodaySummary()`: 앱 실행 시 호출. 전날 일기 기반의 AI 요약 요청.
+  - `postChecklistSummary(checklist)`: 온보딩 모달에서 선택한 항목들로 요약 요청.
 
-- `axios` 라이브러리 사용
-- **API Client Instance 생성**:
-  - `baseURL` 설정
-  - `interceptors`를 사용해 요청 시 `Authorization` 헤더에 `accessToken` 자동 추가
-  - 응답 `interceptor`에서 401 에러 발생 시 토큰 갱신 또는 로그아웃 처리
-- **API 함수**: `diaryStore`와 연동될 API 호출 함수 정의
-  - `login(email, password)`
-  - `getDiaries(year, month)`
-  - `postDiary(content, mood)`
-  - `getAnalyzedDiary(diaryId)`
-
-이 기획서를 바탕으로 `LightLog_FE` 프로젝트의 초기 구조를 설정하고 MVP 개발을 시작한다.
+이 기획서를 바탕으로 `LightLog_FE` 프로젝트의 메인 화면 재설계를 시작한다.
 

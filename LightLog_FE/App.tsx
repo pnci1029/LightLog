@@ -8,6 +8,7 @@ export default function App() {
         <Text style={styles.headerText}>LightLog</Text>
       </View>
       <View style={styles.content}>
+        <Text style={styles.developmentText}>개발 중입니다.</Text>
         <Text style={styles.welcomeText}>Welcome to LightLog!</Text>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Start Logging</Text>
@@ -38,6 +39,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  developmentText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'red',
+    marginBottom: 20,
   },
   welcomeText: {
     fontSize: 18,

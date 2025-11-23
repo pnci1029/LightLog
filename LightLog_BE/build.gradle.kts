@@ -24,8 +24,21 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-security") // Spring Security
     runtimeOnly("com.h2database:h2") // H2 Database for development
     developmentOnly("org.springframework.boot:spring-boot-devtools") // Optional: for hot-reloading
+
+    // JWT Libraries
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5") {
+        isForce = true
+    }
+    implementation("io.jsonwebtoken:jjwt-impl:0.12.5") {
+        isForce = true
+    }
+    implementation("io.jsonwebtoken:jjwt-jackson:0.12.5") {
+        isForce = true
+    }
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

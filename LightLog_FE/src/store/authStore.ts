@@ -45,12 +45,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (data: RegisterRequest) => {
+    console.log('authStore register 시작:', data);
     set({ isLoading: true, error: null });
     try {
+      console.log('authService.register 호출');
       await authService.register(data);
+      console.log('authService.register 완료');
       set({ isLoading: false, error: null });
+      console.log('authStore register 성공 완료');
       // 회원가입 후 자동 로그인하지 않고 로그인 화면으로 이동하도록 설정
     } catch (error: any) {
+      console.log('authStore register 에러:', error);
       set({ 
         isLoading: false,
         error: error.message

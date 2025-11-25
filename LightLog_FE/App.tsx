@@ -59,7 +59,7 @@ export default function App() {
     };
 
     initializeApp();
-  }, [isAuthenticated]);
+  }, []); // 의존성 배열을 비워서 앱 최초 로딩시에만 실행
 
   const handleFabPress = () => {
     // Navigate to DiaryWriteScreen in the future
@@ -78,9 +78,36 @@ export default function App() {
     }
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     // 로그인 성공 후 앱 다시 초기화
     setIsLoading(true);
+    
+    try {
+      // 인증 상태 다시 확인
+      await checkAuthStatus();
+      
+      // 온보딩 상태 확인
+      const hasCompleted = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (hasCompleted) {
+        // 어제 일기 가져오기
+        await getYesterdayDiary();
+        
+        if (yesterdayDiary) {
+          setSummary('어제 하루도 정말 멋졌네요! 오늘 당신의 이야기도 들려주세요.');
+        } else {
+          setSummary('첫 번째 일기를 작성해보세요! 오늘의 이야기를 들려주세요.');
+        }
+        setShowModal(false);
+      } else {
+        // 온보딩이 완료되지 않은 경우 모달 표시
+        setShowModal(true);
+      }
+    } catch (e) {
+      console.error('로그인 후 초기화 중 오류 발생:', e);
+      setShowModal(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // --- UI ---

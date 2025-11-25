@@ -12,6 +12,15 @@ export interface DiaryCreateRequest {
   date: string; // YYYY-MM-DD 형식
 }
 
+export interface SummaryRequest {
+  activities: string[];
+  date: string; // YYYY-MM-DD 형식
+}
+
+export interface SummaryResponse {
+  summary: string;
+}
+
 class DiaryService {
   // 일기 작성
   async createDiary(data: DiaryCreateRequest): Promise<Diary> {
@@ -47,6 +56,16 @@ class DiaryService {
     } catch (error) {
       console.error('어제 일기를 가져오는데 실패했습니다:', error);
       return null;
+    }
+  }
+
+  // 하루 요약 생성
+  async generateSummary(data: SummaryRequest): Promise<string> {
+    try {
+      const response = await apiClient.post<SummaryResponse>('/diaries/summary', data);
+      return response.data.summary;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '하루 요약 생성에 실패했습니다.');
     }
   }
 }

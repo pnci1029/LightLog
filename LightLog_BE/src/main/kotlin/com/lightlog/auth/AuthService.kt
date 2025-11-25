@@ -15,7 +15,10 @@ class AuthService(
 
     fun registerUser(request: UserRegistrationRequest): User {
         if (userRepository.findByUsername(request.username).isPresent) {
-            throw IllegalArgumentException("Username is already taken")
+            throw IllegalArgumentException("이미 사용 중인 아이디입니다.")
+        }
+        if (userRepository.findByNickname(request.nickname).isPresent) {
+            throw IllegalArgumentException("이미 사용 중인 닉네임입니다.")
         }
         val encodedPassword = passwordEncoder.encode(request.password)
         val user = User(
@@ -36,5 +39,13 @@ class AuthService(
 
         val token = jwtTokenProvider.createToken(user.username)
         return AuthResponse(token)
+    }
+
+    fun isUsernameAvailable(username: String): Boolean {
+        return userRepository.findByUsername(username).isEmpty
+    }
+
+    fun isNicknameAvailable(nickname: String): Boolean {
+        return userRepository.findByNickname(nickname).isEmpty
     }
 }

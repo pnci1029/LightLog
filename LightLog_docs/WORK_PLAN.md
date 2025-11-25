@@ -12,28 +12,38 @@
 
 ---
 
-## Phase 2: 백엔드 핵심 기능 구현
+## Phase 2: 백엔드 핵심 기능 구현 (완료)
 
-- [ ] `LightLog_BE`: Spring Boot, Kotlin, Gradle 프로젝트 초기 설정
-- [ ] Spring Security 및 JWT(JSON Web Token) 라이브러리 추가, 보안 설정 구성
-- [ ] 사용자(`User`) 관련 기능 구현
-  - [ ] `User` Entity, `UserRepository` 생성
-  - [ ] `AuthController`, `AuthService` 구현 (회원가입, 로그인 API)
-- [ ] 일기(`Diary`) 관련 기능 구현
-  - [ ] `Diary` Entity, `DiaryRepository` 생성
-  - [ ] `DiaryController`, `DiaryService` 구현 (기본적인 CRUD API)
+- [x] ~~`LightLog_BE`: Spring Boot, Kotlin, Gradle 프로젝트 초기 설정~~
+- [x] ~~Spring Security 및 JWT(JSON Web Token) 라이브러리 추가, 보안 설정 구성~~
+- [x] ~~사용자(`User`) 관련 기능 구현~~
+  - [x] ~~`User` Entity, `UserRepository` 생성~~
+  - [x] ~~`AuthController`, `AuthService` 구현 (회원가입, 로그인 API)~~
+- [x] ~~일기(`Diary`) 관련 기능 구현~~
+  - [x] ~~`Diary` Entity, `DiaryRepository` 생성~~
+  - [x] ~~`DiaryController`, `DiaryService` 구현 (기본적인 CRUD API)~~
 
 ---
 
-## Phase 3: 프론트엔드-백엔드 연동
+## Phase 3: 프론트엔드-백엔드 연동 (진행 중)
 
-- [ ] 프론트엔드: `axios`를 이용한 API 클라이언트 설정
-- [ ] 프론트엔드: `Zustand`를 이용한 전역 상태 관리 (인증 토큰, 사용자 정보)
-- [ ] 회원가입/로그인 화면 UI 구현
-- [ ] 회원가입/로그인 기능 연동 (API 호출, JWT 토큰 저장/관리)
-- [ ] 메인 화면과 백엔드 연동
-  - [ ] 앱 실행 시, 실제 '어제 일기' 데이터 조회 API 호출
-  - [ ] 온보딩 모달에서 '하루 요약 보기' 선택 시, 백엔드에 요약 요청 API 호출
+- [x] ~~프론트엔드: `axios`를 이용한 API 클라이언트 설정~~
+- [x] ~~프론트엔드: `Zustand`를 이용한 전역 상태 관리 (인증 토큰, 사용자 정보)~~
+- [x] ~~회원가입/로그인 화면 UI 구현~~
+- [x] ~~회원가입/로그인 기능 연동 (API 호출, JWT 토큰 저장/관리)~~
+- [x] ~~아이디/닉네임 중복 체크 기능 구현~~
+- [x] ~~비밀번호 보기 토글 기능 추가~~
+- [ ] 로그인/회원가입 프로세스 UX 고도화
+  - [ ] 회원가입 완료 후 적절한 피드백 및 화면 전환 개선
+  - [ ] 로그인 실패 시 에러 메시지 개선
+  - [ ] 폼 검증 UX 개선 (실시간 검증 vs 제출 시 검증)
+- [ ] 인증 화면 스타일 개선
+  - [ ] 일관된 디자인 시스템 적용
+  - [ ] 반응형 레이아웃 개선
+  - [ ] 접근성(Accessibility) 고려
+- [x] ~~메인 화면과 백엔드 연동~~
+  - [x] ~~앱 실행 시, 실제 '어제 일기' 데이터 조회 API 호출~~
+  - [ ] 온보딩 모달에서 '하루 요약 보기' 선택 시, 백엔드에 요약 요청 API 호출 (AI 기능 필요)
 
 ---
 

@@ -15,8 +15,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onAuthSuccess }) => {
   const handleSwitchToLogin = () => setIsLoginMode(true);
 
   const handleRegisterSuccess = () => {
-    // 회원가입 및 자동 로그인 성공 후 메인 앱으로 이동
-    onAuthSuccess();
+    // 회원가입 완료 후 로그인 화면으로 이동
+    setIsLoginMode(true);
   };
 
   return (

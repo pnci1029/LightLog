@@ -73,6 +73,26 @@ class AuthService {
     const token = await this.getToken();
     return !!token;
   }
+
+  // 아이디 중복 체크
+  async checkUsernameAvailability(username: string): Promise<{available: boolean, message: string}> {
+    try {
+      const response = await apiClient.get(`/auth/check-username?username=${encodeURIComponent(username)}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '아이디 중복 체크에 실패했습니다.');
+    }
+  }
+
+  // 닉네임 중복 체크
+  async checkNicknameAvailability(nickname: string): Promise<{available: boolean, message: string}> {
+    try {
+      const response = await apiClient.get(`/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '닉네임 중복 체크에 실패했습니다.');
+    }
+  }
 }
 
 export default new AuthService();

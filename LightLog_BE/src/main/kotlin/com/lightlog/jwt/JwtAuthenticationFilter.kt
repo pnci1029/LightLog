@@ -16,9 +16,19 @@ class JwtAuthenticationFilter(
         filterChain: FilterChain
     ) {
         val token = resolveToken(request)
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            val auth = jwtTokenProvider.getAuthentication(token)
-            SecurityContextHolder.getContext().authentication = auth
+        println("JWT Filter - Request URI: ${request.requestURI}")
+        println("JWT Filter - Token exists: ${token != null}")
+        
+        if (token != null) {
+            println("JWT Filter - Token: ${token.take(20)}...")
+            val isValid = jwtTokenProvider.validateToken(token)
+            println("JWT Filter - Token valid: $isValid")
+            
+            if (isValid) {
+                val auth = jwtTokenProvider.getAuthentication(token)
+                SecurityContextHolder.getContext().authentication = auth
+                println("JWT Filter - Authentication set: ${auth.name}")
+            }
         }
         filterChain.doFilter(request, response)
     }

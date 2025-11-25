@@ -47,9 +47,13 @@ class JwtTokenProvider(
     fun validateToken(token: String): Boolean {
         try {
             val claims = getClaims(token)
-            return !claims.expiration.before(Date())
+            val isExpired = claims.expiration.before(Date())
+            println("JWT Token - Expiration: ${claims.expiration}")
+            println("JWT Token - Current time: ${Date()}")
+            println("JWT Token - Is expired: $isExpired")
+            return !isExpired
         } catch (e: Exception) {
-            // Log the exception
+            println("JWT Token validation error: ${e.message}")
             return false
         }
     }

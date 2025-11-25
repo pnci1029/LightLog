@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { theme } from '../../theme/theme';
 import { useAuthStore } from '../../store/authStore';
@@ -42,6 +43,17 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
+  // 실시간 검증 상태
+  const [validationErrors, setValidationErrors] = useState({
+    username: '',
+    password: '',
+    passwordConfirm: '',
+    nickname: '',
+  });
+
+  // 성공 모달 상태
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const { register, isLoading, error, clearError } = useAuthStore();
 
   const handleInputChange = (field: string, value: string) => {
@@ -54,6 +66,57 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
     } else if (field === 'nickname') {
       setNicknameCheck({ status: 'idle', message: '' });
     }
+
+    // 실시간 검증
+    validateField(field, value);
+  };
+
+  const validateField = (field: string, value: string) => {
+    let errorMessage = '';
+    
+    switch (field) {
+      case 'username':
+        if (!value.trim()) {
+          errorMessage = '';
+        } else if (value.length < 3) {
+          errorMessage = '아이디는 3자 이상 입력해주세요.';
+        }
+        break;
+      case 'password':
+        if (!value) {
+          errorMessage = '';
+        } else if (value.length < 6) {
+          errorMessage = '비밀번호는 6자 이상 입력해주세요.';
+        }
+        // 비밀번호 확인 재검증
+        if (formData.passwordConfirm && value !== formData.passwordConfirm) {
+          setValidationErrors(prev => ({ ...prev, passwordConfirm: '비밀번호가 일치하지 않습니다.' }));
+        } else {
+          setValidationErrors(prev => ({ ...prev, passwordConfirm: '' }));
+        }
+        break;
+      case 'passwordConfirm':
+        if (!value) {
+          errorMessage = '';
+        } else if (value !== formData.password) {
+          errorMessage = '비밀번호가 일치하지 않습니다.';
+        }
+        break;
+      case 'nickname':
+        if (!value.trim()) {
+          errorMessage = '';
+        }
+        break;
+    }
+
+    setValidationErrors(prev => ({ ...prev, [field]: errorMessage }));
+  };
+
+  const handleSuccessModalConfirm = () => {
+    console.log('확인 버튼 클릭');
+    setShowSuccessModal(false);
+    onSwitchToLogin();
+    onRegisterSuccess();
   };
 
   // 아이디 중복 체크
@@ -95,9 +158,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
     if (formData.username.trim().length >= 3) {
       checkUsername(formData.username.trim());
     } else {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('아이디는 3자 이상 입력해주세요.');
-      }
+      Alert.alert('알림', '아이디는 3자 이상 입력해주세요.');
     }
   };
 
@@ -106,66 +167,48 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
     if (formData.nickname.trim().length >= 1) {
       checkNickname(formData.nickname.trim());
     } else {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('닉네임을 입력해주세요.');
-      }
+      Alert.alert('알림', '닉네임을 입력해주세요.');
     }
   };
 
   const validateForm = () => {
     if (!formData.username.trim()) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('아이디를 입력해주세요.');
-      }
+      Alert.alert('알림', '아이디를 입력해주세요.');
       return false;
     }
     
     if (formData.username.length < 3) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('아이디는 3자 이상 입력해주세요.');
-      }
+      Alert.alert('알림', '아이디는 3자 이상 입력해주세요.');
       return false;
     }
 
     if (usernameCheck.status !== 'available') {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('아이디 중복 확인을 완료해주세요.');
-      }
+      Alert.alert('알림', '아이디 중복 확인을 완료해주세요.');
       return false;
     }
 
     if (!formData.password) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('비밀번호를 입력해주세요.');
-      }
+      Alert.alert('알림', '비밀번호를 입력해주세요.');
       return false;
     }
 
     if (formData.password.length < 6) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('비밀번호는 6자 이상 입력해주세요.');
-      }
+      Alert.alert('알림', '비밀번호는 6자 이상 입력해주세요.');
       return false;
     }
 
     if (formData.password !== formData.passwordConfirm) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('비밀번호가 일치하지 않습니다.');
-      }
+      Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
       return false;
     }
 
     if (!formData.nickname.trim()) {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('닉네임을 입력해주세요.');
-      }
+      Alert.alert('알림', '닉네임을 입력해주세요.');
       return false;
     }
 
     if (nicknameCheck.status !== 'available') {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('닉네임 중복 확인을 완료해주세요.');
-      }
+      Alert.alert('알림', '닉네임 중복 확인을 완료해주세요.');
       return false;
     }
 
@@ -173,38 +216,37 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
   };
 
   const handleRegister = async () => {
+    console.log('회원가입 시작');
     if (!validateForm()) return;
 
     try {
+      console.log('register 호출 시작');
       await register({
         username: formData.username.trim(),
         password: formData.password,
         nickname: formData.nickname.trim(),
       });
+      console.log('register 완료, 성공 모달 표시 예정');
       
-      // React Native Web에서 Alert가 작동하지 않으므로 브라우저 네이티브 confirm 사용
-      if (typeof window !== 'undefined' && window.confirm) {
-        const shouldProceed = window.confirm('회원가입이 완료되었습니다! 로그인 화면으로 이동하시겠습니까?');
-        if (shouldProceed) {
-          onSwitchToLogin();
-        }
-      } else {
-        // 브라우저 confirm도 안되면 바로 이동
-        onSwitchToLogin();
-      }
+      // 회원가입 완료 안내 모달 표시
+      setShowSuccessModal(true);
+      console.log('성공 모달 상태 true로 설정');
     } catch (err) {
-      // React Native Web에서 Alert가 작동하지 않으므로 브라우저 네이티브 alert 사용
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('회원가입 실패: ' + (error || '회원가입 중 오류가 발생했습니다.'));
-      }
+      console.log('회원가입 에러:', err);
+      Alert.alert(
+        '회원가입 실패', 
+        error || '회원가입 중 오류가 발생했습니다.\n다시 시도해주세요.',
+        [{ text: '확인', style: 'default' }]
+      );
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>회원가입</Text>
@@ -219,6 +261,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                     styles.inputWithButton,
                     usernameCheck.status === 'available' && styles.inputSuccess,
                     usernameCheck.status === 'unavailable' && styles.inputError,
+                    validationErrors.username && styles.inputError,
                   ]}
                   placeholder="아이디를 입력하세요 (3자 이상)"
                   value={formData.username}
@@ -242,13 +285,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                   )}
                 </TouchableOpacity>
               </View>
-              {usernameCheck.message ? (
+              {(usernameCheck.message || validationErrors.username) ? (
                 <Text style={[
                   styles.validationMessage,
                   usernameCheck.status === 'available' && styles.successMessage,
-                  usernameCheck.status === 'unavailable' && styles.errorMessage,
+                  (usernameCheck.status === 'unavailable' || validationErrors.username) && styles.errorMessage,
                 ]}>
-                  {usernameCheck.message}
+                  {validationErrors.username || usernameCheck.message}
                 </Text>
               ) : null}
             </View>
@@ -257,7 +300,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
               <Text style={styles.label}>비밀번호</Text>
               <View style={styles.passwordInputWrapper}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[
+                    styles.passwordInput,
+                    validationErrors.password && styles.inputError,
+                  ]}
                   placeholder="비밀번호를 입력하세요 (6자 이상)"
                   value={formData.password}
                   onChangeText={(value) => handleInputChange('password', value)}
@@ -271,13 +317,21 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                   <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '🙈'}</Text>
                 </TouchableOpacity>
               </View>
+              {validationErrors.password ? (
+                <Text style={[styles.validationMessage, styles.errorMessage]}>
+                  {validationErrors.password}
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>비밀번호 확인</Text>
               <View style={styles.passwordInputWrapper}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[
+                    styles.passwordInput,
+                    validationErrors.passwordConfirm && styles.inputError,
+                  ]}
                   placeholder="비밀번호를 다시 입력하세요"
                   value={formData.passwordConfirm}
                   onChangeText={(value) => handleInputChange('passwordConfirm', value)}
@@ -291,6 +345,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                   <Text style={styles.eyeIcon}>{showPasswordConfirm ? '👁️' : '🙈'}</Text>
                 </TouchableOpacity>
               </View>
+              {validationErrors.passwordConfirm ? (
+                <Text style={[styles.validationMessage, styles.errorMessage]}>
+                  {validationErrors.passwordConfirm}
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.inputContainer}>
@@ -301,6 +360,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                     styles.inputWithButton,
                     nicknameCheck.status === 'available' && styles.inputSuccess,
                     nicknameCheck.status === 'unavailable' && styles.inputError,
+                    validationErrors.nickname && styles.inputError,
                   ]}
                   placeholder="닉네임을 입력하세요"
                   value={formData.nickname}
@@ -323,13 +383,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
                   )}
                 </TouchableOpacity>
               </View>
-              {nicknameCheck.message ? (
+              {(nicknameCheck.message || validationErrors.nickname) ? (
                 <Text style={[
                   styles.validationMessage,
                   nicknameCheck.status === 'available' && styles.successMessage,
-                  nicknameCheck.status === 'unavailable' && styles.errorMessage,
+                  (nicknameCheck.status === 'unavailable' || validationErrors.nickname) && styles.errorMessage,
                 ]}>
-                  {nicknameCheck.message}
+                  {validationErrors.nickname || nicknameCheck.message}
                 </Text>
               ) : null}
             </View>
@@ -356,6 +416,30 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin, onRegi
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+
+    {/* 회원가입 성공 모달 */}
+    <Modal
+      transparent={true}
+      visible={showSuccessModal}
+      animationType="fade"
+      onRequestClose={() => {}}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>환영합니다! 🎉</Text>
+          <Text style={styles.modalMessage}>
+            회원가입이 완료되었습니다.{'\n'}이제 계정으로 로그인해주세요.
+          </Text>
+          <TouchableOpacity 
+            style={styles.modalButton} 
+            onPress={handleSuccessModalConfirm}
+          >
+            <Text style={styles.modalButtonText}>확인</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  </>
   );
 };
 
@@ -439,6 +523,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: theme.main,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   disabledButton: {
     opacity: 0.6,
@@ -478,6 +570,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     color: theme.text,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   checkButton: {
     height: 50,
@@ -487,6 +587,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 80,
+    shadowColor: theme.main,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
   checkButtonDisabled: {
     backgroundColor: theme.textSecondary,
@@ -513,6 +621,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
     color: theme.text,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   eyeButton: {
     position: 'absolute',
@@ -525,6 +641,63 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     fontSize: 20,
+  },
+  // 성공 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    minWidth: 280,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: theme.text,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  modalButton: {
+    backgroundColor: theme.main,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    minWidth: 100,
+    shadowColor: theme.main,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

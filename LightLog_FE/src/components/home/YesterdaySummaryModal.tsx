@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { theme } from '../../theme/theme';
+import diaryService from '../../services/diaryService';
 
 const ACTIVITIES = [
   '업무/공부에 집중했어요',
@@ -18,11 +19,12 @@ interface YesterdaySummaryModalProps {
 
 const YesterdaySummaryModal: React.FC<YesterdaySummaryModalProps> = ({ visible, onComplete }) => {
   const [selected, setSelected] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
   const { height } = Dimensions.get('window');
   const slideAnim = useRef(new Animated.Value(height)).current;
 
   // Determine if the submit button should be disabled
-  const isSubmitDisabled = selected.length === 0;
+  const isSubmitDisabled = loading;
 
   useEffect(() => {
     if (visible) {
@@ -54,19 +56,31 @@ const YesterdaySummaryModal: React.FC<YesterdaySummaryModalProps> = ({ visible, 
       toValue: height,
       duration: 300,
       useNativeDriver: true,
-    }).start(() => onComplete(summary));
+    }).start(() => {
+      setSelected([]);
+      setLoading(false);
+      onComplete(summary);
+    });
   };
 
-  const handleSubmit = () => {
-    // If no activities are selected, provide a default summary and close.
-    // This part is crucial as the user explicitly asked for no alerts.
-    if (isSubmitDisabled) {
-        handleClose('별다른 일 없이 평온한 하루를 보냈군요. 그것만으로도 충분히 좋은 하루예요.');
-      return;
+  const handleSubmit = async () => {
+    setLoading(true);
+    
+    try {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      const summary = await diaryService.generateSummary({
+        activities: selected,
+        date: yesterdayStr
+      });
+      
+      handleClose(summary);
+    } catch (error: any) {
+      Alert.alert('알림', error.message || '요약 생성에 실패했습니다.');
+      setLoading(false);
     }
-    // This is a mock summary generation.
-    const summary = `${selected.join(', ')} (을)를 하며 하루를 보내셨군요. 오늘도 분명 좋은 일이 있을 거예요!`;
-    handleClose(summary);
   };
 
   if (!visible) {
@@ -94,9 +108,13 @@ const YesterdaySummaryModal: React.FC<YesterdaySummaryModalProps> = ({ visible, 
         <TouchableOpacity
             style={[styles.button, isSubmitDisabled && styles.buttonDisabled]}
             onPress={handleSubmit}
-            disabled={isSubmitDisabled} // Disable the TouchableOpacity itself
+            disabled={isSubmitDisabled}
         >
-          <Text style={styles.buttonText}>하루 요약 보기</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>하루 요약 보기</Text>
+          )}
         </TouchableOpacity>
       </Animated.View>
     </View>

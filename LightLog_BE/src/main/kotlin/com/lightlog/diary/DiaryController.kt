@@ -5,6 +5,15 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
+data class SummaryRequest(
+    val activities: List<String>,
+    val date: LocalDate
+)
+
+data class SummaryResponse(
+    val summary: String
+)
+
 @RestController
 @RequestMapping("/api/diaries")
 class DiaryController(
@@ -23,5 +32,11 @@ class DiaryController(
     ): ResponseEntity<List<Diary>> {
         val diaries = diaryService.getDiariesForDate(date)
         return ResponseEntity.ok(diaries)
+    }
+
+    @PostMapping("/summary")
+    fun generateSummary(@RequestBody request: SummaryRequest): ResponseEntity<SummaryResponse> {
+        val summary = diaryService.generateSummary(request.activities, request.date)
+        return ResponseEntity.ok(SummaryResponse(summary))
     }
 }

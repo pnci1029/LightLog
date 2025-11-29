@@ -11,7 +11,11 @@ import { useDiaryStore } from '../../store/diaryStore';
 
 const ONBOARDING_KEY = '@hasCompletedOnboarding';
 
-const HomeScreen: React.FC = () => {
+interface HomeScreenProps {
+  onNavigateToWrite?: () => void;
+}
+
+const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToWrite }) => {
   const [showModal, setShowModal] = useState(false);
   const [summary, setSummary] = useState('어제에 대한 AI의 따뜻한 요약을 기다리고 있어요...');
   
@@ -58,8 +62,11 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleFabPress = () => {
-    // TODO: 일기 작성 탭으로 이동 (나중에 구현)
-    console.log('FAB pressed - 일기쓰기 탭으로 이동 예정');
+    if (onNavigateToWrite) {
+      onNavigateToWrite();
+    } else {
+      console.log('FAB pressed - onNavigateToWrite prop이 없습니다');
+    }
   };
 
   return (

@@ -32,6 +32,16 @@ class DiaryService {
     }
   }
 
+  // 일기 수정
+  async updateDiary(id: number, data: DiaryCreateRequest): Promise<Diary> {
+    try {
+      const response = await apiClient.put<Diary>(`/diaries/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '일기 수정에 실패했습니다.');
+    }
+  }
+
   // 특정 날짜 일기 조회
   async getDiariesByDate(date: string): Promise<Diary[]> {
     try {
@@ -66,6 +76,16 @@ class DiaryService {
       return response.data.summary;
     } catch (error: any) {
       throw new Error(error.response?.data || '하루 요약 생성에 실패했습니다.');
+    }
+  }
+
+  // 과거 일기 조회
+  async getPastDiaries(): Promise<{ [key: string]: Diary | null }> {
+    try {
+      const response = await apiClient.get<{ [key: string]: Diary | null }>('/diaries/past');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '과거 일기를 불러오는데 실패했습니다.');
     }
   }
 }

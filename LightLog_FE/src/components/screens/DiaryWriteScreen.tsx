@@ -19,6 +19,38 @@ const DiaryWriteScreen: React.FC = () => {
   const [content, setContent] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [diaryId, setDiaryId] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadTodayDiary();
+  }, []);
+
+  const loadTodayDiary = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      const diaries = await diaryService.getDiariesByDate(today);
+      
+      if (diaries.length > 0) {
+        // 오늘 일기가 있으면 수정 모드
+        const todayDiary = diaries[0];
+        setContent(todayDiary.content);
+        setIsEditing(true);
+        setDiaryId(todayDiary.id);
+        console.log('기존 일기 불러옴 - 수정 모드');
+      } else {
+        // 오늘 일기가 없으면 새 작성 모드
+        setIsEditing(false);
+        setDiaryId(null);
+        console.log('새 일기 작성 모드');
+      }
+    } catch (error) {
+      console.error('오늘 일기 확인 중 오류:', error);
+      // 에러가 발생해도 새 작성 모드로 진행
+      setIsEditing(false);
+      setDiaryId(null);
+    }
+  };
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('ko-KR', {
@@ -38,17 +70,25 @@ const DiaryWriteScreen: React.FC = () => {
     setIsLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
-      await diaryService.createDiary({
-        content: content.trim(),
-        date: dateStr
-      });
       
-      Alert.alert('완료', '일기가 저장되었습니다!', [
-        { text: '확인', onPress: () => {
-          setContent('');
-          // TODO: 홈 탭으로 이동하는 로직 추가 예정
-        }}
-      ]);
+      if (isEditing && diaryId) {
+        // 수정 모드
+        await diaryService.updateDiary(diaryId, {
+          content: content.trim(),
+          date: dateStr
+        });
+        Alert.alert('완료', '일기가 수정되었습니다!');
+      } else {
+        // 새 작성 모드
+        const newDiary = await diaryService.createDiary({
+          content: content.trim(),
+          date: dateStr
+        });
+        // 저장 후 수정 모드로 전환
+        setIsEditing(true);
+        setDiaryId(newDiary.id);
+        Alert.alert('완료', '일기가 저장되었습니다!');
+      }
     } catch (error: any) {
       Alert.alert('오류', error.message || '일기 저장에 실패했습니다.');
     } finally {
@@ -63,7 +103,7 @@ const DiaryWriteScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="일기 작성" />
+      <Header title={isEditing ? "일기 수정" : "일기 작성"} />
       
       <KeyboardAvoidingView 
         style={styles.keyboardView}
@@ -104,7 +144,7 @@ const DiaryWriteScreen: React.FC = () => {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.saveButtonText}>저장하기</Text>
+              <Text style={styles.saveButtonText}>{isEditing ? "수정하기" : "저장하기"}</Text>
             )}
           </TouchableOpacity>
         </View>

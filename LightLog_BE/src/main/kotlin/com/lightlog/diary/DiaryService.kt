@@ -22,6 +22,20 @@ class DiaryService(
         return diaryRepository.save(diary)
     }
 
+    fun updateDiary(id: Long, content: String): Diary {
+        val currentUser = getCurrentUser()
+        val diary = diaryRepository.findById(id)
+            .orElseThrow { IllegalArgumentException("Diary not found") }
+        
+        // 본인 일기인지 확인
+        if (diary.user.id != currentUser.id) {
+            throw IllegalArgumentException("Permission denied")
+        }
+        
+        diary.content = content
+        return diaryRepository.save(diary)
+    }
+
     fun getDiariesForDate(date: LocalDate): List<Diary> {
         val currentUser = getCurrentUser()
         return diaryRepository.findByUserAndDate(currentUser, date)
@@ -37,6 +51,22 @@ class DiaryService(
             activities.size <= 3 -> "${activities.joinToString(", ")}을 하며 알차게 보낸 하루였어요. 좋은 하루 보내셨네요! ✨"
             else -> "정말 다채로운 하루를 보내셨네요! ${activities.take(3).joinToString(", ")} 등 많은 일들로 가득한 하루였군요. 활기찬 하루였어요! 🎉"
         }
+    }
+
+    fun getPastDiary(monthsAgo: Int): Diary? {
+        val currentUser = getCurrentUser()
+        val targetDate = LocalDate.now().minusMonths(monthsAgo.toLong())
+        val diaries = diaryRepository.findByUserAndDate(currentUser, targetDate)
+        return if (diaries.isNotEmpty()) diaries[0] else null
+    }
+
+    fun getPastDiaries(): Map<String, Diary?> {
+        return mapOf(
+            "1month" to getPastDiary(1),
+            "3months" to getPastDiary(3),
+            "6months" to getPastDiary(6),
+            "12months" to getPastDiary(12)
+        )
     }
 
     private fun getCurrentUser(): User {

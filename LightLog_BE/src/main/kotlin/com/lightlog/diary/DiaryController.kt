@@ -26,6 +26,15 @@ class DiaryController(
         return ResponseEntity.ok(diary)
     }
 
+    @PutMapping("/{id}")
+    fun updateDiary(
+        @PathVariable id: Long,
+        @RequestBody request: DiaryCreateRequest
+    ): ResponseEntity<Diary> {
+        val diary = diaryService.updateDiary(id, request.content)
+        return ResponseEntity.ok(diary)
+    }
+
     @GetMapping
     fun getDiaries(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate
@@ -38,5 +47,11 @@ class DiaryController(
     fun generateSummary(@RequestBody request: SummaryRequest): ResponseEntity<SummaryResponse> {
         val summary = diaryService.generateSummary(request.activities, request.date)
         return ResponseEntity.ok(SummaryResponse(summary))
+    }
+
+    @GetMapping("/past")
+    fun getPastDiaries(): ResponseEntity<Map<String, Diary?>> {
+        val pastDiaries = diaryService.getPastDiaries()
+        return ResponseEntity.ok(pastDiaries)
     }
 }

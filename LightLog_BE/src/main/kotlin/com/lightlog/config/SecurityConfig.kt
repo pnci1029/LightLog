@@ -47,19 +47,28 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        
+
         // 허용할 오리진 설정 (개발 환경)
-        configuration.allowedOriginPatterns = listOf("*")
-        
+        configuration.allowedOrigins = listOf(
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        )
+
         // 허용할 HTTP 메소드
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        
+        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+
         // 허용할 헤더
         configuration.allowedHeaders = listOf("*")
-        
+
+        // 노출할 헤더
+        configuration.exposedHeaders = listOf("Authorization")
+
         // 인증 정보 포함 허용
         configuration.allowCredentials = true
-        
+
+        // Preflight 요청 캐시 시간
+        configuration.maxAge = 3600L
+
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source

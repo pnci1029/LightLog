@@ -8,12 +8,15 @@ import HomeScreen from '../screens/HomeScreen';
 import DiaryWriteScreen from '../screens/DiaryWriteScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import SearchScreen from '../screens/SearchScreen';
+import StatisticsScreen from '../screens/StatisticsScreen';
+import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 
 interface TabNavigatorProps {
   // Props 추가 예정
 }
 
-type TabType = 'home' | 'write' | 'calendar' | 'settings';
+type TabType = 'home' | 'write' | 'calendar' | 'settings' | 'search' | 'statistics' | 'notifications';
 
 const TabNavigator: React.FC<TabNavigatorProps> = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -28,15 +31,25 @@ const TabNavigator: React.FC<TabNavigatorProps> = () => {
   const renderScreen = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeScreen />;
+        return <HomeScreen onNavigateToWrite={() => setActiveTab('write')} />;
       case 'write':
         return <DiaryWriteScreen />;
       case 'calendar':
         return <CalendarScreen />;
       case 'settings':
-        return <SettingsScreen />;
+        return <SettingsScreen 
+          onNavigateToSearch={() => setActiveTab('search')} 
+          onNavigateToStatistics={() => setActiveTab('statistics')}
+          onNavigateToNotifications={() => setActiveTab('notifications')}
+        />;
+      case 'search':
+        return <SearchScreen onClose={() => setActiveTab('settings')} />;
+      case 'statistics':
+        return <StatisticsScreen onClose={() => setActiveTab('settings')} />;
+      case 'notifications':
+        return <NotificationSettingsScreen onClose={() => setActiveTab('settings')} />;
       default:
-        return <HomeScreen />;
+        return <HomeScreen onNavigateToWrite={() => setActiveTab('write')} />;
     }
   };
 

@@ -21,6 +21,25 @@ export interface SummaryResponse {
   summary: string;
 }
 
+export interface DiaryStatistics {
+  totalDiaries: number;
+  currentMonthDiaries: number;
+  longestStreak: number;
+  currentStreak: number;
+  monthlyStats: MonthlyStats[];
+  recentDays: DayStats[];
+}
+
+export interface MonthlyStats {
+  month: string;
+  count: number;
+}
+
+export interface DayStats {
+  date: string;
+  hasEntry: boolean;
+}
+
 class DiaryService {
   // 일기 작성
   async createDiary(data: DiaryCreateRequest): Promise<Diary> {
@@ -86,6 +105,35 @@ class DiaryService {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data || '과거 일기를 불러오는데 실패했습니다.');
+    }
+  }
+
+  // 일기 검색
+  async searchDiaries(params: {
+    keyword?: string;
+    startDate?: string; // YYYY-MM-DD 형식
+    endDate?: string; // YYYY-MM-DD 형식
+  }): Promise<Diary[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.keyword) queryParams.append('keyword', params.keyword);
+      if (params.startDate) queryParams.append('startDate', params.startDate);
+      if (params.endDate) queryParams.append('endDate', params.endDate);
+
+      const response = await apiClient.get<Diary[]>(`/diaries/search?${queryParams}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '일기 검색에 실패했습니다.');
+    }
+  }
+
+  // 일기 통계 조회
+  async getDiaryStatistics(): Promise<DiaryStatistics> {
+    try {
+      const response = await apiClient.get<DiaryStatistics>('/diaries/statistics');
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '일기 통계 조회에 실패했습니다.');
     }
   }
 }

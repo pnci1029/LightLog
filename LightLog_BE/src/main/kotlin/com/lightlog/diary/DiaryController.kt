@@ -14,6 +14,25 @@ data class SummaryResponse(
     val summary: String
 )
 
+data class DiaryStatistics(
+    val totalDiaries: Long,
+    val currentMonthDiaries: Long,
+    val longestStreak: Int,
+    val currentStreak: Int,
+    val monthlyStats: List<MonthlyStats>,
+    val recentDays: List<DayStats>
+)
+
+data class MonthlyStats(
+    val month: String,
+    val count: Long
+)
+
+data class DayStats(
+    val date: String,
+    val hasEntry: Boolean
+)
+
 @RestController
 @RequestMapping("/api/diaries")
 class DiaryController(
@@ -53,5 +72,21 @@ class DiaryController(
     fun getPastDiaries(): ResponseEntity<Map<String, Diary?>> {
         val pastDiaries = diaryService.getPastDiaries()
         return ResponseEntity.ok(pastDiaries)
+    }
+
+    @GetMapping("/search")
+    fun searchDiaries(
+        @RequestParam(required = false) keyword: String?,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate?,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate?
+    ): ResponseEntity<List<Diary>> {
+        val diaries = diaryService.searchDiaries(keyword, startDate, endDate)
+        return ResponseEntity.ok(diaries)
+    }
+
+    @GetMapping("/statistics")
+    fun getDiaryStatistics(): ResponseEntity<DiaryStatistics> {
+        val statistics = diaryService.getDiaryStatistics()
+        return ResponseEntity.ok(statistics)
     }
 }

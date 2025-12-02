@@ -84,14 +84,29 @@
 
 ---
 
-## Phase 5: 부가 기능 및 사용자 경험 개선
+## Phase 5: 부가 기능 및 사용자 경험 개선 (완료)
 
-- [ ] `SettingsScreen`: 설정 화면 UI 및 기능 구현 (로그아웃 등)
-- [ ] 일기 검색 기능 (키워드, 날짜 범위)
-- [ ] 일기 통계 기능 (작성 빈도, 감정 분석 등)
-- [ ] 푸시 알림 기능 구현 (일기 작성 리마인더)
-- [ ] 데이터 백업/복원 기능
-- [ ] 전체 UI/UX 최종 검토 및 개선
+- [x] ~~백엔드 DTO 구조 개선 (별도 패키지 분리)~~
+- [x] ~~`SearchScreen`: 일기 검색 화면 UI 구현~~
+- [x] ~~`StatisticsScreen`: 일기 통계 화면 UI 구현~~
+- [x] ~~`NotificationSettingsScreen`: 푸시 알림 설정 화면 UI 구현~~
+- [x] ~~`SettingsScreen`: 설정 화면 UI 및 기능 구현 (로그아웃 등)~~
+- [x] ~~백엔드: 일기 검색 API 구현 (`/api/diaries/search`)~~
+- [x] ~~백엔드: 일기 통계 API 구현 (`/api/diaries/statistics`)~~
+- [x] ~~푸시 알림 기능 구현 (일기 작성 리마인더)~~
+- [x] ~~화면 간 데이터 전달 및 상태 관리 (TabNavigator 연동)~~
+- [x] ~~데이터 백업/복원 기능~~
+  - [x] ~~백엔드: 데이터 export/import API 구현~~
+  - [x] ~~프론트엔드: 파일 업로드/다운로드 기능 구현~~
+  - [x] ~~SettingsScreen에 백업/복원 UI 연동~~
+- [x] ~~전체 UI/UX 최종 검토 및 개선~~
+  - [x] ~~테마 시스템 확장 (spacing, typography, shadows)~~
+  - [x] ~~공통 컴포넌트 구현 (Button, Card, LoadingOverlay, ErrorMessage, EmptyState)~~
+  - [x] ~~일관된 디자인 시스템 적용~~
+
+### 📋 코딩 표준 및 구조 규칙
+- [x] ~~`CODING_STANDARDS.md`: DTO 분리 원칙 및 패키지 구조 규칙 문서화~~
+- 모든 새로운 코드는 [CODING_STANDARDS.md](./CODING_STANDARDS.md)를 따라야 함
 
 ---
 

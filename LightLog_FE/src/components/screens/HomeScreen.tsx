@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: theme.spacing.lg,
     paddingBottom: 100, // FAB 공간 확보
   },
 });

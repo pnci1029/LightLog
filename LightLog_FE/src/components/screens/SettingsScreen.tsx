@@ -11,6 +11,7 @@ import {
 import { theme } from '../../theme/theme';
 import Header from '../common/Header';
 import { useAuthStore } from '../../store/authStore';
+import backupService from '../../services/backupService';
 
 interface SettingItemProps {
   icon: string;
@@ -54,6 +55,8 @@ interface SettingsScreenProps {
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onNavigateToStatistics, onNavigateToNotifications }) => {
   const { logout } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -83,8 +86,72 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
     );
   };
 
-  const handleDataBackup = () => {
-    Alert.alert('준비중', '데이터 백업 기능이 곧 추가될 예정입니다.');
+  const handleDataBackup = async () => {
+    try {
+      setIsBackingUp(true);
+      
+      // 백업 미리보기 가져오기
+      const preview = await backupService.getBackupPreview();
+      
+      Alert.alert(
+        '데이터 백업',
+        `총 ${preview.totalDiaries}개의 일기를 백업합니다.\n${preview.dateRange ? `기간: ${preview.dateRange.start} ~ ${preview.dateRange.end}` : ''}\n\n백업 파일을 저장하시겠습니까?`,
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '백업',
+            onPress: async () => {
+              try {
+                await backupService.exportData();
+                Alert.alert('완료', '데이터 백업이 완료되었습니다.');
+              } catch (error: any) {
+                Alert.alert('오류', error.message || '백업 중 오류가 발생했습니다.');
+              }
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '백업을 준비하는 중 오류가 발생했습니다.');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleDataRestore = () => {
+    Alert.alert(
+      '데이터 복원',
+      '백업 파일을 선택하여 일기 데이터를 복원합니다.\n기존 일기와 같은 날짜의 일기는 어떻게 처리하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '건너뛰기',
+          onPress: () => performRestore(false),
+        },
+        {
+          text: '덮어쓰기',
+          onPress: () => performRestore(true),
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
+  const performRestore = async (overwrite: boolean) => {
+    try {
+      setIsRestoring(true);
+      const result = await backupService.importData(overwrite);
+      
+      Alert.alert(
+        '복원 완료',
+        `${result.imported}개 일기 복원됨\n${result.skipped}개 일기 건너뜀\n${result.errors.length > 0 ? `${result.errors.length}개 오류 발생` : ''}`,
+        [{ text: '확인' }]
+      );
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '복원 중 오류가 발생했습니다.');
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   const handleNotificationSettings = () => {
@@ -130,8 +197,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
             <SettingItem
               icon="💾"
               title="데이터 백업"
-              subtitle="일기 데이터 백업 및 복원"
-              onPress={handleDataBackup}
+              subtitle={isBackingUp ? "백업 중..." : "일기 데이터를 파일로 저장"}
+              onPress={isBackingUp ? undefined : handleDataBackup}
+            />
+            <SettingItem
+              icon="📥"
+              title="데이터 복원"
+              subtitle={isRestoring ? "복원 중..." : "백업 파일에서 일기 데이터 가져오기"}
+              onPress={isRestoring ? undefined : handleDataRestore}
             />
             <SettingItem
               icon="🔍"

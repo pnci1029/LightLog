@@ -1,5 +1,8 @@
 package com.lightlog.auth
 
+import com.lightlog.dto.AuthResponse
+import com.lightlog.dto.UserLoginRequest
+import com.lightlog.dto.UserRegistrationRequest
 import com.lightlog.jwt.JwtTokenProvider
 import com.lightlog.user.User
 import com.lightlog.user.UserRepository

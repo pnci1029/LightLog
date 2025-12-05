@@ -11,46 +11,60 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme } from '../../theme/theme';
 import Header from '../common/Header';
-import diaryService from '../../services/diaryService';
+import { useDiaryStore } from '../../store/diaryStore';
+import AIReinterpretationModal from '../common/AIReinterpretationModal';
+import DailyFeedbackModal from '../common/DailyFeedbackModal';
 
 const DiaryWriteScreen: React.FC = () => {
+  const {
+    currentDiary,
+    selectedDate: storeSelectedDate,
+    isLoading,
+    error,
+    loadDiaryForDate,
+    createDiary,
+    updateDiary,
+    setSelectedDate: setStoreSelectedDate,
+    clearError
+  } = useDiaryStore();
+
   const [content, setContent] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [diaryId, setDiaryId] = useState<number | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [showDailyFeedbackModal, setShowDailyFeedbackModal] = useState(false);
+  
+  // 수정 모드 여부는 currentDiary가 있는지로 판단
+  const isEditing = currentDiary !== null;
 
   useEffect(() => {
-    loadTodayDiary();
+    // 컴포넌트 마운트 시 오늘 날짜로 초기화
+    const today = new Date();
+    setSelectedDate(today);
+    const todayStr = today.toISOString().split('T')[0];
+    setStoreSelectedDate(todayStr);
+    loadDiaryForDate(todayStr);
   }, []);
 
-  const loadTodayDiary = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD 형식
-      const diaries = await diaryService.getDiariesByDate(today);
-      
-      if (diaries.length > 0) {
-        // 오늘 일기가 있으면 수정 모드
-        const todayDiary = diaries[0];
-        setContent(todayDiary.content);
-        setIsEditing(true);
-        setDiaryId(todayDiary.id);
-        console.log('기존 일기 불러옴 - 수정 모드');
-      } else {
-        // 오늘 일기가 없으면 새 작성 모드
-        setIsEditing(false);
-        setDiaryId(null);
-        console.log('새 일기 작성 모드');
-      }
-    } catch (error) {
-      console.error('오늘 일기 확인 중 오류:', error);
-      // 에러가 발생해도 새 작성 모드로 진행
-      setIsEditing(false);
-      setDiaryId(null);
+  useEffect(() => {
+    // currentDiary가 변경될 때 content 업데이트
+    if (currentDiary) {
+      setContent(currentDiary.content);
+    } else {
+      setContent('');
     }
-  };
+  }, [currentDiary]);
+
+  useEffect(() => {
+    // 에러 발생 시 Alert 표시
+    if (error) {
+      Alert.alert('오류', error);
+      clearError();
+    }
+  }, [error]);
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('ko-KR', {
@@ -67,38 +81,51 @@ const DiaryWriteScreen: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
       
-      if (isEditing && diaryId) {
+      if (isEditing && currentDiary) {
         // 수정 모드
-        await diaryService.updateDiary(diaryId, {
+        await updateDiary(currentDiary.id, {
           content: content.trim(),
           date: dateStr
         });
         Alert.alert('완료', '일기가 수정되었습니다!');
       } else {
         // 새 작성 모드
-        const newDiary = await diaryService.createDiary({
+        await createDiary({
           content: content.trim(),
           date: dateStr
         });
-        // 저장 후 수정 모드로 전환
-        setIsEditing(true);
-        setDiaryId(newDiary.id);
         Alert.alert('완료', '일기가 저장되었습니다!');
       }
     } catch (error: any) {
-      Alert.alert('오류', error.message || '일기 저장에 실패했습니다.');
-    } finally {
-      setIsLoading(false);
+      // 에러는 store에서 처리되어 useEffect에서 Alert으로 표시됨
+      console.error('일기 저장 실패:', error);
     }
   };
 
   const handleDatePress = () => {
-    // TODO: 날짜 선택 모달 구현 예정
-    Alert.alert('알림', '날짜 선택 기능이 곧 구현됩니다!');
+    setShowDatePicker(true);
+  };
+
+  const onDateChange = (event: any, newDate?: Date) => {
+    const currentDate = newDate || selectedDate;
+    setShowDatePicker(Platform.OS === 'ios');
+    
+    // 미래 날짜는 선택할 수 없도록 제한
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // 오늘 끝까지로 설정
+    
+    if (currentDate <= today) {
+      setSelectedDate(currentDate);
+      const dateStr = currentDate.toISOString().split('T')[0];
+      setStoreSelectedDate(dateStr);
+      loadDiaryForDate(dateStr);
+    } else {
+      Alert.alert('알림', '미래 날짜는 선택할 수 없습니다.');
+      setShowDatePicker(false);
+    }
   };
 
   return (
@@ -117,6 +144,19 @@ const DiaryWriteScreen: React.FC = () => {
             <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
           </TouchableOpacity>
 
+          {/* 날짜 선택 피커 */}
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={selectedDate}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onDateChange}
+              maximumDate={new Date()} // 오늘까지만 선택 가능
+            />
+          )}
+
           {/* 일기 내용 입력 */}
           <View style={styles.contentContainer}>
             <Text style={styles.contentLabel}>오늘의 이야기</Text>
@@ -134,8 +174,29 @@ const DiaryWriteScreen: React.FC = () => {
           </View>
         </ScrollView>
 
-        {/* 저장 버튼 */}
+        {/* 버튼 영역 */}
         <View style={styles.buttonContainer}>
+          {/* AI 버튼들 */}
+          <View style={styles.aiButtonsContainer}>
+            {/* AI 재해석 버튼 - 일기가 있을 때만 표시 */}
+            {content.trim() && (
+              <TouchableOpacity
+                style={[styles.aiButton, styles.aiButtonHalf]}
+                onPress={() => setShowAIModal(true)}
+              >
+                <Text style={styles.aiButtonText}>✨ AI 재해석</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* AI 일일 피드백 버튼 */}
+            <TouchableOpacity
+              style={[styles.aiButton, content.trim() ? styles.aiButtonHalf : styles.aiButtonFull]}
+              onPress={() => setShowDailyFeedbackModal(true)}
+            >
+              <Text style={styles.aiButtonText}>🤖 AI 피드백</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             style={[styles.saveButton, (!content.trim() || isLoading) && styles.saveButtonDisabled]}
             onPress={handleSave}
@@ -149,6 +210,21 @@ const DiaryWriteScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      
+      {/* AI 재해석 모달 */}
+      <AIReinterpretationModal
+        visible={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        diaryContent={content}
+        diaryDate={selectedDate.toISOString().split('T')[0]}
+      />
+
+      {/* AI 일일 피드백 모달 */}
+      <DailyFeedbackModal
+        visible={showDailyFeedbackModal}
+        onClose={() => setShowDailyFeedbackModal(false)}
+        selectedDate={selectedDate.toISOString().split('T')[0]}
+      />
     </View>
   );
 };
@@ -264,6 +340,31 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  aiButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  aiButton: {
+    backgroundColor: '#f8f9ff',
+    borderRadius: 12,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.main + '30',
+  },
+  aiButtonHalf: {
+    flex: 1,
+  },
+  aiButtonFull: {
+    width: '100%',
+  },
+  aiButtonText: {
+    color: theme.main,
     fontSize: 16,
     fontWeight: '600',
   },

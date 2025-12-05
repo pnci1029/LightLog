@@ -12,6 +12,7 @@ import { theme } from '../../theme/theme';
 import Header from '../common/Header';
 import { useAuthStore } from '../../store/authStore';
 import backupService from '../../services/backupService';
+import AIToneSelector from '../common/AIToneSelector';
 
 interface SettingItemProps {
   icon: string;
@@ -57,6 +58,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [showAIToneSelector, setShowAIToneSelector] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -176,6 +178,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
           <Text style={styles.sectionTitle}>앱 설정</Text>
           <View style={styles.sectionContent}>
             <SettingItem
+              icon="🤖"
+              title="AI 톤 설정"
+              subtitle="AI 응답 스타일 선택"
+              onPress={() => setShowAIToneSelector(true)}
+            />
+            <SettingItem
               icon="🔔"
               title="알림 설정"
               subtitle="일기 작성 리마인더"
@@ -262,6 +270,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
         {/* 하단 여백 */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* AI 톤 선택 모달 */}
+      <AIToneSelector
+        visible={showAIToneSelector}
+        onClose={() => setShowAIToneSelector(false)}
+        onToneChanged={(tone) => {
+          console.log('AI 톤이 변경되었습니다:', tone);
+        }}
+      />
     </View>
   );
 };

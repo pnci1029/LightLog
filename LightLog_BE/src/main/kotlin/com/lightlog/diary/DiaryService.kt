@@ -1,5 +1,8 @@
 package com.lightlog.diary
 
+import com.lightlog.ai.AIService
+import com.lightlog.dto.*
+import java.time.LocalDateTime
 import com.lightlog.user.User
 import com.lightlog.user.UserRepository
 import org.springframework.security.core.context.SecurityContextHolder
@@ -11,7 +14,8 @@ import kotlin.math.abs
 @Service
 class DiaryService(
     private val diaryRepository: DiaryRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val aiService: AIService
 ) {
 
     fun createDiary(content: String, date: LocalDate): Diary {
@@ -46,7 +50,42 @@ class DiaryService(
     fun generateSummary(activities: List<String>, date: LocalDate): String {
         val currentUser = getCurrentUser()
         
-        // 간단한 규칙 기반 요약 생성 (나중에 AI로 교체 예정)
+        return try {
+            // AI 기반 체크리스트 요약 생성
+            aiService.generateChecklistSummary(activities, date)
+        } catch (e: Exception) {
+            // AI 호출 실패 시 폴백 로직
+            generateFallbackSummary(activities)
+        }
+    }
+
+    fun generatePositiveReinterpretation(diaryContent: String, date: LocalDate): String {
+        val currentUser = getCurrentUser()
+        
+        return try {
+            // AI 기반 긍정 재해석 생성
+            aiService.generatePositiveReinterpretation(diaryContent, date)
+        } catch (e: Exception) {
+            // AI 호출 실패 시 폴백 메시지
+            "오늘의 경험들도 모두 소중한 의미가 있어요. 하루하루 성장해나가는 모습이 정말 멋져요! ✨"
+        }
+    }
+
+    fun generateDailyFeedback(date: LocalDate): String {
+        val currentUser = getCurrentUser()
+        
+        // 해당 날짜의 일기 조회
+        val diaries = diaryRepository.findByUserAndDate(currentUser, date)
+        val diaryContent = if (diaries.isNotEmpty()) {
+            diaries.joinToString("\n\n") { it.content }
+        } else {
+            null
+        }
+        
+        return aiService.generateDailyFeedback(diaryContent, date)
+    }
+
+    private fun generateFallbackSummary(activities: List<String>): String {
         return when {
             activities.isEmpty() -> "별다른 일 없이 평온한 하루를 보냈군요. 그것만으로도 충분히 좋은 하루예요."
             activities.size == 1 -> "${activities[0]}을 하며 의미있는 하루를 보내셨네요! 🌟"
@@ -211,9 +250,71 @@ class DiaryService(
         return recentDays
     }
 
+    fun exportUserData(): DataExportResponse {
+        val currentUser = getCurrentUser()
+        val allDiaries = diaryRepository.findAllByUserOrderByDateDesc(currentUser)
+        
+        val userExport = UserDataExport(
+            username = currentUser.username,
+            nickname = currentUser.nickname,
+            createdAt = currentUser.createdAt
+        )
+        
+        val diaryExports = allDiaries.map { diary ->
+            DiaryDataExport(
+                content = diary.content,
+                date = diary.date,
+                createdAt = diary.createdAt
+            )
+        }
+        
+        return DataExportResponse(
+            user = userExport,
+            diaries = diaryExports,
+            exportedAt = LocalDateTime.now()
+        )
+    }
+    
+    fun importUserData(request: DataImportRequest): ImportResult {
+        val currentUser = getCurrentUser()
+        var imported = 0
+        var skipped = 0
+        val errors = mutableListOf<String>()
+        
+        for (diaryData in request.diaries) {
+            try {
+                val existingDiaries = diaryRepository.findByUserAndDate(currentUser, diaryData.date)
+                
+                if (existingDiaries.isNotEmpty() && !request.overwriteExisting) {
+                    skipped++
+                    continue
+                }
+                
+                // 기존 일기가 있고 덮어쓰기 모드인 경우 기존 일기 삭제
+                if (existingDiaries.isNotEmpty() && request.overwriteExisting) {
+                    diaryRepository.deleteAll(existingDiaries)
+                }
+                
+                val diary = Diary(
+                    content = diaryData.content,
+                    date = diaryData.date,
+                    user = currentUser
+                )
+                diaryRepository.save(diary)
+                imported++
+                
+            } catch (e: Exception) {
+                errors.add("${diaryData.date}: ${e.message}")
+            }
+        }
+        
+        return ImportResult(imported, skipped, errors)
+    }
+
     private fun getCurrentUser(): User {
         val username = SecurityContextHolder.getContext().authentication.name
         return userRepository.findByUsername(username)
             .orElseThrow { IllegalStateException("Authenticated user not found in database") }
     }
 }
+

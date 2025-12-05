@@ -6,6 +6,9 @@ import com.lightlog.dto.DiaryCreateRequest
 import com.lightlog.dto.DiaryStatistics
 import com.lightlog.dto.SummaryRequest
 import com.lightlog.dto.SummaryResponse
+import com.lightlog.dto.PositiveReinterpretationRequest
+import com.lightlog.dto.PositiveReinterpretationResponse
+import com.lightlog.dto.DailyFeedbackResponse
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -44,6 +47,52 @@ class DiaryController(
     fun generateSummary(@RequestBody request: SummaryRequest): ResponseEntity<SummaryResponse> {
         val summary = diaryService.generateSummary(request.activities, request.date)
         return ResponseEntity.ok(SummaryResponse(summary))
+    }
+
+    @PostMapping("/positive-reinterpretation")
+    fun generatePositiveReinterpretation(@RequestBody request: PositiveReinterpretationRequest): ResponseEntity<PositiveReinterpretationResponse> {
+        val reinterpretation = diaryService.generatePositiveReinterpretation(request.content, request.date)
+        return ResponseEntity.ok(PositiveReinterpretationResponse(reinterpretation))
+    }
+
+    @GetMapping("/daily-feedback")
+    fun getDailyFeedback(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
+    ): ResponseEntity<DailyFeedbackResponse> {
+        val targetDate = date ?: LocalDate.now()
+        
+        return try {
+            // 해당 날짜의 일기 조회
+            val diaries = diaryService.getDiariesForDate(targetDate)
+            val diaryContent = if (diaries.isNotEmpty()) {
+                diaries.joinToString("\n\n") { it.content }
+            } else {
+                null
+            }
+            
+            // AI 피드백 생성
+            val feedback = diaryService.generateDailyFeedback(targetDate)
+            
+            ResponseEntity.ok(
+                DailyFeedbackResponse(
+                    date = targetDate,
+                    diaryContent = diaryContent,
+                    feedback = feedback,
+                    hasDiary = diaries.isNotEmpty(),
+                    message = "AI 피드백이 성공적으로 생성되었습니다."
+                )
+            )
+        } catch (error: Exception) {
+            ResponseEntity.badRequest().body(
+                DailyFeedbackResponse(
+                    date = targetDate,
+                    diaryContent = null,
+                    feedback = "죄송해요. 지금은 피드백을 생성할 수 없어요. 잠시 후 다시 시도해주세요! 😅",
+                    hasDiary = false,
+                    message = "AI 피드백 생성 중 오류가 발생했습니다: ${error.message}"
+                )
+            )
+        }
     }
 
     @GetMapping("/past")

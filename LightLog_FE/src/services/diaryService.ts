@@ -21,6 +21,23 @@ export interface SummaryResponse {
   summary: string;
 }
 
+export interface PositiveReinterpretationRequest {
+  content: string;
+  date: string; // YYYY-MM-DD 형식
+}
+
+export interface PositiveReinterpretationResponse {
+  reinterpretation: string;
+}
+
+export interface DailyFeedbackResponse {
+  date: string; // YYYY-MM-DD 형식
+  diaryContent: string | null;
+  feedback: string;
+  hasDiary: boolean;
+  message: string;
+}
+
 export interface DiaryStatistics {
   totalDiaries: number;
   currentMonthDiaries: number;
@@ -134,6 +151,27 @@ class DiaryService {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data || '일기 통계 조회에 실패했습니다.');
+    }
+  }
+
+  // AI 긍정적 재해석
+  async generatePositiveReinterpretation(data: PositiveReinterpretationRequest): Promise<string> {
+    try {
+      const response = await apiClient.post<PositiveReinterpretationResponse>('/diaries/positive-reinterpretation', data);
+      return response.data.reinterpretation;
+    } catch (error: any) {
+      throw new Error(error.response?.data || '긍정적 재해석 생성에 실패했습니다.');
+    }
+  }
+
+  // AI 일일 피드백
+  async getDailyFeedback(date?: string): Promise<DailyFeedbackResponse> {
+    try {
+      const params = date ? { date } : {};
+      const response = await apiClient.get<DailyFeedbackResponse>('/diaries/daily-feedback', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'AI 피드백 생성에 실패했습니다.');
     }
   }
 }

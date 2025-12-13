@@ -7,13 +7,18 @@ interface DiaryState {
   diaries: Diary[];
   currentDiary: Diary | null;
   yesterdayDiary: Diary | null;
+  selectedDate: string; // YYYY-MM-DD 형식
   isLoading: boolean;
   error: string | null;
 
   // Actions
   createDiary: (data: DiaryCreateRequest) => Promise<void>;
+  updateDiary: (id: number, data: DiaryCreateRequest) => Promise<void>;
   getDiariesByDate: (date: string) => Promise<void>;
   getYesterdayDiary: () => Promise<void>;
+  loadDiaryForDate: (date: string) => Promise<void>;
+  setSelectedDate: (date: string) => void;
+  clearCurrentDiary: () => void;
   clearError: () => void;
 }
 
@@ -22,6 +27,7 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
   diaries: [],
   currentDiary: null,
   yesterdayDiary: null,
+  selectedDate: new Date().toISOString().split('T')[0], // 오늘 날짜로 초기화
   isLoading: false,
   error: null,
 
@@ -34,6 +40,31 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
       set({ 
         diaries: [newDiary, ...currentDiaries],
         currentDiary: newDiary,
+        selectedDate: data.date,
+        isLoading: false,
+        error: null
+      });
+    } catch (error: any) {
+      set({ 
+        isLoading: false,
+        error: error.message
+      });
+      throw error;
+    }
+  },
+
+  updateDiary: async (id: number, data: DiaryCreateRequest) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedDiary = await diaryService.updateDiary(id, data);
+      const currentDiaries = get().diaries;
+      const updatedDiaries = currentDiaries.map(diary => 
+        diary.id === id ? updatedDiary : diary
+      );
+      set({ 
+        diaries: updatedDiaries,
+        currentDiary: updatedDiary,
+        selectedDate: data.date,
         isLoading: false,
         error: null
       });
@@ -52,6 +83,7 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
       const diaries = await diaryService.getDiariesByDate(date);
       set({ 
         diaries,
+        selectedDate: date,
         isLoading: false,
         error: null
       });
@@ -63,6 +95,33 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
       });
     }
   },
+
+  loadDiaryForDate: async (date: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const diaries = await diaryService.getDiariesByDate(date);
+      const diary = diaries.length > 0 ? diaries[0] : null;
+      set({ 
+        currentDiary: diary,
+        selectedDate: date,
+        isLoading: false,
+        error: null
+      });
+    } catch (error: any) {
+      set({ 
+        isLoading: false,
+        error: error.message,
+        currentDiary: null
+      });
+      throw error;
+    }
+  },
+
+  setSelectedDate: (date: string) => {
+    set({ selectedDate: date });
+  },
+
+  clearCurrentDiary: () => set({ currentDiary: null }),
 
   getYesterdayDiary: async () => {
     set({ isLoading: true, error: null });

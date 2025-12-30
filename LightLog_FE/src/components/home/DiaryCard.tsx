@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import { theme } from '../../theme/theme';
 
 const DiaryCard = () => {
   return (
@@ -11,27 +12,17 @@ const DiaryCard = () => {
 
 const styles = StyleSheet.create({
   diaryCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 25,
+    backgroundColor: theme.background,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 200,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    ...theme.shadows.sm,
   },
   diaryCardText: {
-    fontSize: 16,
-    color: '#A9A9A9',
+    fontSize: theme.fontSize.md,
+    color: theme.textSecondary,
   },
 });
 

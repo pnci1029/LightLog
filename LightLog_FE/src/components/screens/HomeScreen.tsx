@@ -17,7 +17,7 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToWrite }) => {
   const [showModal, setShowModal] = useState(false);
-  const [summary, setSummary] = useState('어제에 대한 AI의 따뜻한 요약을 기다리고 있어요...');
+  const [summary, setSummary] = useState('어제의 일기를 불러오고 있습니다...');
   
   const { getYesterdayDiary, yesterdayDiary } = useDiaryStore();
 
@@ -31,9 +31,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToWrite }) => {
           await getYesterdayDiary();
           
           if (yesterdayDiary) {
-            setSummary('어제 하루도 정말 멋졌네요! 오늘 당신의 이야기도 들려주세요.');
+            setSummary('오늘 하루는 어땠나요?');
           } else {
-            setSummary('첫 번째 일기를 작성해보세요! 오늘의 이야기를 들려주세요.');
+            setSummary('첫 일기를 작성해 보세요.');
           }
           setShowModal(false);
         } else {
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: theme.spacing.lg,
-    paddingBottom: 100, // FAB 공간 확보
+    paddingBottom: theme.spacing.xxl * 2, // FAB 공간 확보
   },
 });
 

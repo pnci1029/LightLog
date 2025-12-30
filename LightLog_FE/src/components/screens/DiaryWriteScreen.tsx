@@ -176,26 +176,15 @@ const DiaryWriteScreen: React.FC = () => {
 
         {/* 버튼 영역 */}
         <View style={styles.buttonContainer}>
-          {/* AI 버튼들 */}
-          <View style={styles.aiButtonsContainer}>
-            {/* AI 재해석 버튼 - 일기가 있을 때만 표시 */}
-            {content.trim() && (
-              <TouchableOpacity
-                style={[styles.aiButton, styles.aiButtonHalf]}
-                onPress={() => setShowAIModal(true)}
-              >
-                <Text style={styles.aiButtonText}>✨ AI 재해석</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* AI 일일 피드백 버튼 */}
+          {/* AI 도움받기 버튼 */}
+          {content.trim() && (
             <TouchableOpacity
-              style={[styles.aiButton, content.trim() ? styles.aiButtonHalf : styles.aiButtonFull]}
-              onPress={() => setShowDailyFeedbackModal(true)}
+              style={styles.aiButton}
+              onPress={() => setShowAIModal(true)}
             >
-              <Text style={styles.aiButtonText}>🤖 AI 피드백</Text>
+              <Text style={styles.aiButtonText}>AI 도움받기</Text>
             </TouchableOpacity>
-          </View>
+          )}
 
           <TouchableOpacity
             style={[styles.saveButton, (!content.trim() || isLoading) && styles.saveButtonDisabled]}

@@ -60,11 +60,10 @@ const DailyFeedbackModal: React.FC<DailyFeedbackModalProps> = ({
     if (!hasGenerated && !isLoading) {
       return (
         <View style={styles.introContainer}>
-          <Text style={styles.introIcon}>🤖</Text>
-          <Text style={styles.introTitle}>AI 일기 피드백</Text>
+          <Text style={styles.introTitle}>일기 피드백</Text>
           <Text style={styles.introText}>
-            {selectedDate ? `${formatDate(selectedDate)} 일기에 대한` : '오늘 작성한 일기에 대한'} AI 피드백을 받아보세요.
-            {'\n\n'}AI가 당신의 하루를 분석하고 따뜻한 격려와 조언을 전해드립니다.
+            {selectedDate ? `${formatDate(selectedDate)} 일기에 대한` : '오늘 작성한 일기에 대한'} 피드백을 받아보세요.
+            {'\n\n'}작성한 일기를 분석하여 개선점과 조언을 제공합니다.
           </Text>
         </View>
       );
@@ -74,8 +73,8 @@ const DailyFeedbackModal: React.FC<DailyFeedbackModalProps> = ({
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.main} />
-          <Text style={styles.loadingText}>AI가 당신의 하루를 분석하고 있어요...</Text>
-          <Text style={styles.loadingSubtext}>잠시만 기다려주세요 ✨</Text>
+          <Text style={styles.loadingText}>일기를 분석하고 있습니다...</Text>
+          <Text style={styles.loadingSubtext}>잠시만 기다려 주세요</Text>
         </View>
       );
     }
@@ -85,23 +84,23 @@ const DailyFeedbackModal: React.FC<DailyFeedbackModalProps> = ({
         <View style={styles.feedbackContainer}>
           <View style={styles.feedbackHeader}>
             <Text style={styles.feedbackDate}>
-              📅 {formatDate(feedbackData.date)}
+              {formatDate(feedbackData.date)}
             </Text>
             {!feedbackData.hasDiary && (
               <Text style={styles.noDiaryNotice}>
-                ℹ️ 이 날 작성된 일기가 없습니다
+                이 날 작성된 일기가 없습니다
               </Text>
             )}
           </View>
 
           <View style={styles.feedbackContent}>
-            <Text style={styles.feedbackTitle}>🤖 AI의 피드백</Text>
+            <Text style={styles.feedbackTitle}>피드백</Text>
             <Text style={styles.feedbackText}>{feedbackData.feedback}</Text>
           </View>
 
           {feedbackData.diaryContent && (
             <View style={styles.diaryPreview}>
-              <Text style={styles.diaryPreviewTitle}>📝 오늘의 일기</Text>
+              <Text style={styles.diaryPreviewTitle}>오늘의 일기</Text>
               <Text style={styles.diaryPreviewText} numberOfLines={5}>
                 {feedbackData.diaryContent}
               </Text>
@@ -125,7 +124,7 @@ const DailyFeedbackModal: React.FC<DailyFeedbackModalProps> = ({
         <View style={styles.modalContent}>
           {/* 헤더 */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>AI 일기 피드백</Text>
+            <Text style={styles.headerTitle}>일기 피드백</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>×</Text>
             </TouchableOpacity>
@@ -143,7 +142,7 @@ const DailyFeedbackModal: React.FC<DailyFeedbackModalProps> = ({
                 style={styles.generateButton}
                 onPress={generateFeedback}
               >
-                <Text style={styles.generateButtonText}>AI 피드백 받기</Text>
+                <Text style={styles.generateButtonText}>피드백 받기</Text>
               </TouchableOpacity>
             )}
 
@@ -174,8 +173,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    backgroundColor: theme.background,
+    borderRadius: theme.borderRadius.xl,
     width: '100%',
     maxHeight: '85%',
     elevation: 10,
@@ -191,12 +190,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: theme.secondary + '30',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: theme.fontSize.lg,
     fontWeight: '600',
     color: theme.text,
   },
@@ -204,7 +203,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.secondary + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -215,24 +214,24 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: theme.spacing.lg,
   },
   introContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: theme.spacing.lg,
   },
   introIcon: {
     fontSize: 48,
     marginBottom: 16,
   },
   introTitle: {
-    fontSize: 18,
+    fontSize: theme.fontSize.lg,
     fontWeight: '600',
     color: theme.text,
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
   },
   introText: {
-    fontSize: 16,
+    fontSize: theme.fontSize.md,
     color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 24,

@@ -93,7 +93,7 @@ const AIReinterpretationModal: React.FC<AIReinterpretationModalProps> = ({
 
             {hasGenerated && !isLoading && reinterpretation && (
               <View style={styles.reinterpretationContainer}>
-                <Text style={styles.reinterpretationTitle}>✨ AI의 긍정적 해석</Text>
+                <Text style={styles.reinterpretationTitle}>긍정적 해석</Text>
                 <Text style={styles.reinterpretationText}>{reinterpretation}</Text>
               </View>
             )}

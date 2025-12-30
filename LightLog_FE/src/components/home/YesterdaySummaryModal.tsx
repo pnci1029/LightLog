@@ -90,8 +90,8 @@ const YesterdaySummaryModal: React.FC<YesterdaySummaryModalProps> = ({ visible, 
   return (
     <View style={styles.modalContainer}>
       <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }] }]}>
-        <Text style={styles.title}>어제는 어떤 하루였나요?</Text>
-        <Text style={styles.subtitle}>해당하는 항목을 모두 선택해주세요.</Text>
+        <Text style={styles.title}>어제 하루 되돌아보기</Text>
+        <Text style={styles.subtitle}>해당하는 항목을 선택해 주세요.</Text>
         <View style={styles.checklist}>
           {ACTIVITIES.map((activity) => (
             <TouchableOpacity
@@ -113,7 +113,7 @@ const YesterdaySummaryModal: React.FC<YesterdaySummaryModalProps> = ({ visible, 
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>하루 요약 보기</Text>
+            <Text style={styles.buttonText}>요약 보기</Text>
           )}
         </TouchableOpacity>
       </Animated.View>
@@ -128,24 +128,24 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
       },
       modalContent: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 25,
+        backgroundColor: theme.background,
+        borderTopLeftRadius: theme.borderRadius.xl,
+        borderTopRightRadius: theme.borderRadius.xl,
+        padding: theme.spacing.xl,
         width: '100%',
         alignItems: 'center',
-        paddingBottom: 40, // Add padding for home indicator
+        paddingBottom: theme.spacing.xxl,
       },
   title: {
-    fontSize: 22,
+    fontSize: theme.fontSize.xl,
     fontWeight: 'bold',
     color: theme.text,
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 25,
+    fontSize: theme.fontSize.sm,
+    color: theme.textSecondary,
+    marginBottom: theme.spacing.xl,
   },
   checklist: {
     flexDirection: 'row',
@@ -154,33 +154,33 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   chip: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    margin: 5,
+    backgroundColor: theme.secondary + '30',
+    borderRadius: theme.borderRadius.xl,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    margin: theme.spacing.xs,
   },
   chipSelected: {
     backgroundColor: theme.main,
   },
   chipText: {
     color: theme.text,
-    fontSize: 14,
+    fontSize: theme.fontSize.sm,
   },
   chipTextSelected: {
-    color: 'white',
+    color: '#fff',
     fontWeight: 'bold',
   },
   button: {
     backgroundColor: theme.main,
-    borderRadius: 15,
-    paddingVertical: 15,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
     width: '100%',
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: theme.fontSize.md,
     fontWeight: 'bold',
   },
   buttonDisabled: {

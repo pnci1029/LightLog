@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import AuthScreen from './src/components/auth/AuthScreen';
 import TabNavigator from './src/components/navigation/TabNavigator';
+import { VoiceTestScreen } from './src/components/voice/VoiceTestScreen';
 import { theme } from './src/theme/theme';
 import { useAuthStore } from './src/store/authStore';
 
@@ -62,11 +63,11 @@ export default function App() {
     );
   }
 
-  // 인증된 경우 탭 네비게이션 화면 표시
+  // 임시로 음성 테스트 화면 표시 (테스트용)
   return (
     <>
       <StatusBar style="dark" />
-      <TabNavigator />
+      <VoiceTestScreen />
     </>
   );
 }

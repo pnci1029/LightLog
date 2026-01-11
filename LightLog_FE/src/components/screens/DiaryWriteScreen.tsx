@@ -184,16 +184,6 @@ const DiaryWriteScreen: React.FC = () => {
               maxLength={2000}
             />
             <Text style={styles.charCount}>{content.length} / 2000</Text>
-            
-            {/* 음성 녹음 버튼 */}
-            <TouchableOpacity
-              style={styles.voiceButton}
-              onPress={() => setShowVoiceModal(true)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="mic" size={20} color={theme.main} />
-              <Text style={styles.voiceButtonText}>음성으로 작성하기</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -219,6 +209,15 @@ const DiaryWriteScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* 플로팅 음성 버튼 */}
+        <TouchableOpacity
+          style={styles.floatingVoiceButton}
+          onPress={() => setShowVoiceModal(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="mic" size={28} color="white" />
+        </TouchableOpacity>
       </KeyboardAvoidingView>
       
       {/* AI 재해석 모달 */}
@@ -385,23 +384,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  voiceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  floatingVoiceButton: {
+    position: 'absolute',
+    bottom: 100, // 저장 버튼 위에 위치
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.main,
     justifyContent: 'center',
-    backgroundColor: theme.main + '10',
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: theme.main + '30',
-    borderStyle: 'dashed',
-  },
-  voiceButtonText: {
-    color: theme.main,
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 8,
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: theme.main,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
 });
 

@@ -24,7 +24,6 @@ interface SettingItemProps {
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({ 
-  icon, 
   title, 
   subtitle, 
   onPress, 
@@ -34,7 +33,6 @@ const SettingItem: React.FC<SettingItemProps> = ({
   return (
     <TouchableOpacity style={styles.settingItem} onPress={onPress}>
       <View style={styles.settingItemLeft}>
-        <Text style={styles.settingIcon}>{icon}</Text>
         <View style={styles.settingTextContainer}>
           <Text style={[styles.settingTitle, { color: textColor }]}>{title}</Text>
           {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
@@ -178,19 +176,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
           <Text style={styles.sectionTitle}>앱 설정</Text>
           <View style={styles.sectionContent}>
             <SettingItem
-              icon="🤖"
               title="AI 톤 설정"
               subtitle="AI 응답 스타일 선택"
               onPress={() => setShowAIToneSelector(true)}
             />
             <SettingItem
-              icon="🔔"
               title="알림 설정"
               subtitle="일기 작성 리마인더"
               onPress={() => onNavigateToNotifications ? onNavigateToNotifications() : handleNotificationSettings()}
             />
             <SettingItem
-              icon="📊"
               title="통계 보기"
               subtitle="나의 일기 작성 통계"
               onPress={() => onNavigateToStatistics ? onNavigateToStatistics() : Alert.alert('준비중', '통계 기능이 곧 추가될 예정입니다.')}
@@ -203,19 +198,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
           <Text style={styles.sectionTitle}>데이터 관리</Text>
           <View style={styles.sectionContent}>
             <SettingItem
-              icon="💾"
               title="데이터 백업"
               subtitle={isBackingUp ? "백업 중..." : "일기 데이터를 파일로 저장"}
               onPress={isBackingUp ? undefined : handleDataBackup}
             />
             <SettingItem
-              icon="📥"
               title="데이터 복원"
               subtitle={isRestoring ? "복원 중..." : "백업 파일에서 일기 데이터 가져오기"}
               onPress={isRestoring ? undefined : handleDataRestore}
             />
             <SettingItem
-              icon="🔍"
               title="일기 검색"
               subtitle="키워드로 일기 찾기"
               onPress={() => onNavigateToSearch ? onNavigateToSearch() : Alert.alert('준비중', '일기 검색 기능이 곧 추가될 예정입니다.')}
@@ -228,17 +220,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
           <Text style={styles.sectionTitle}>정보</Text>
           <View style={styles.sectionContent}>
             <SettingItem
-              icon="📄"
               title="이용약관"
               onPress={handleTermsOfService}
             />
             <SettingItem
-              icon="🔒"
               title="개인정보처리방침"
               onPress={handlePrivacyPolicy}
             />
             <SettingItem
-              icon="ℹ️"
               title="앱 버전"
               subtitle="1.0.0"
               showArrow={false}

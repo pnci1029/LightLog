@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import apiClient from './api';
 import { VoiceUploadResult } from '../utils/voiceUtils';
 
 export interface VoiceUploadResponse {
@@ -23,31 +23,30 @@ export class VoiceService {
       // FormData 생성
       const formData = new FormData();
       
-      // React Native에서 파일 업로드를 위한 설정
-      const fileInfo = {
-        uri: audioUri,
-        type: 'audio/m4a',
-        name: 'voice_recording.m4a',
-      };
-      
-      formData.append('file', fileInfo as any);
+      if (audioUri.startsWith('blob:')) {
+        // 웹에서 blob URI를 File 객체로 변환
+        const response = await fetch(audioUri);
+        const blob = await response.blob();
+        const file = new File([blob], 'voice_recording.m4a', { type: 'audio/m4a' });
+        formData.append('file', file);
+      } else {
+        // React Native에서 파일 업로드를 위한 설정
+        const fileInfo = {
+          uri: audioUri,
+          type: 'audio/m4a',
+          name: 'voice_recording.m4a',
+        };
+        formData.append('file', fileInfo as any);
+      }
 
       // API 호출
-      const response = await fetch(`${apiClient.defaults.baseURL}/api/voice/upload`, {
-        method: 'POST',
-        body: formData,
+      const response = await apiClient.post('/voice/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': apiClient.defaults.headers.common['Authorization'] || '',
         },
       });
 
-      if (!response.ok) {
-        const errorData: VoiceUploadError = await response.json();
-        throw new Error(errorData.message || '음성 변환에 실패했습니다.');
-      }
-
-      const data: VoiceUploadResponse = await response.json();
+      const data: VoiceUploadResponse = response.data;
       
       return {
         transcribedText: data.transcribedText,

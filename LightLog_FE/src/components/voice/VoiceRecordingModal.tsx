@@ -80,12 +80,36 @@ export const VoiceRecordingModal: React.FC<VoiceRecordingModalProps> = ({
       const errorMessage = error instanceof Error 
         ? error.message 
         : '음성을 텍스트로 변환하는데 실패했습니다.';
-        
-      Alert.alert('변환 실패', errorMessage);
+      
+      // 재시도 가능한 에러인지 확인
+      const isRetryable = errorMessage.includes('네트워크') || 
+                          errorMessage.includes('서버') || 
+                          errorMessage.includes('잠시 후');
+      
+      if (isRetryable) {
+        Alert.alert(
+          '변환 실패',
+          errorMessage,
+          [
+            { text: '취소', style: 'cancel' },
+            { 
+              text: '다시 시도', 
+              onPress: () => {
+                if (lastRecordingUri) {
+                  convertToText(lastRecordingUri);
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('변환 실패', errorMessage);
+      }
     } finally {
       setIsProcessing(false);
-      setRecordingComplete(false);
-      setLastRecordingUri(null);
+      if (!lastRecordingUri) {
+        setRecordingComplete(false);
+      }
     }
   };
 
@@ -166,13 +190,15 @@ export const VoiceRecordingModal: React.FC<VoiceRecordingModalProps> = ({
             </TouchableOpacity>
           )}
 
-          {/* 취소 버튼 */}
+          {/* 취소/중단 버튼 */}
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={[styles.cancelButton, isProcessing && styles.cancelButtonDanger]}
             onPress={handleClose}
-            disabled={isProcessing}
+            disabled={false} // 항상 클릭 가능하게 변경
           >
-            <Text style={styles.cancelButtonText}>취소</Text>
+            <Text style={[styles.cancelButtonText, isProcessing && styles.cancelButtonDangerText]}>
+              {isProcessing ? '변환 중단' : '취소'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -258,5 +284,12 @@ const styles = StyleSheet.create({
     color: theme.textSecondary,
     fontSize: 16,
     fontWeight: '600',
+  },
+  cancelButtonDanger: {
+    backgroundColor: theme.error + '20',
+    borderColor: theme.error,
+  },
+  cancelButtonDangerText: {
+    color: theme.error,
   },
 });

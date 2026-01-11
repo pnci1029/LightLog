@@ -17,6 +17,8 @@ import Header from '../common/Header';
 import { useDiaryStore } from '../../store/diaryStore';
 import AIReinterpretationModal from '../common/AIReinterpretationModal';
 import DailyFeedbackModal from '../common/DailyFeedbackModal';
+import { VoiceRecordingModal } from '../voice/VoiceRecordingModal';
+import { Ionicons } from '@expo/vector-icons';
 
 const DiaryWriteScreen: React.FC = () => {
   const {
@@ -36,6 +38,7 @@ const DiaryWriteScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showDailyFeedbackModal, setShowDailyFeedbackModal] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   
   // 수정 모드 여부는 currentDiary가 있는지로 판단
   const isEditing = currentDiary !== null;
@@ -128,6 +131,16 @@ const DiaryWriteScreen: React.FC = () => {
     }
   };
 
+  const handleVoiceTextReady = (text: string) => {
+    // 음성에서 변환된 텍스트를 기존 내용에 추가
+    if (content.trim()) {
+      setContent(content + '\n\n' + text);
+    } else {
+      setContent(text);
+    }
+    setShowVoiceModal(false);
+  };
+
   return (
     <View style={styles.container}>
       <Header title={isEditing ? "일기 수정" : "일기 작성"} />
@@ -171,12 +184,20 @@ const DiaryWriteScreen: React.FC = () => {
               maxLength={2000}
             />
             <Text style={styles.charCount}>{content.length} / 2000</Text>
+            
+            {/* 음성 녹음 버튼 */}
+            <TouchableOpacity
+              style={styles.voiceButton}
+              onPress={() => setShowVoiceModal(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="mic" size={20} color={theme.main} />
+              <Text style={styles.voiceButtonText}>음성으로 작성하기</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
-        {/* 버튼 영역 */}
         <View style={styles.buttonContainer}>
-          {/* AI 도움받기 버튼 */}
           {content.trim() && (
             <TouchableOpacity
               style={styles.aiButton}
@@ -213,6 +234,13 @@ const DiaryWriteScreen: React.FC = () => {
         visible={showDailyFeedbackModal}
         onClose={() => setShowDailyFeedbackModal(false)}
         selectedDate={selectedDate.toISOString().split('T')[0]}
+      />
+
+      {/* 음성 녹음 모달 */}
+      <VoiceRecordingModal
+        visible={showVoiceModal}
+        onClose={() => setShowVoiceModal(false)}
+        onTextReady={handleVoiceTextReady}
       />
     </View>
   );
@@ -356,6 +384,24 @@ const styles = StyleSheet.create({
     color: theme.main,
     fontSize: 16,
     fontWeight: '600',
+  },
+  voiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.main + '10',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: theme.main + '30',
+    borderStyle: 'dashed',
+  },
+  voiceButtonText: {
+    color: theme.main,
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

@@ -4,6 +4,7 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import AuthScreen from './src/components/auth/AuthScreen';
 import TabNavigator from './src/components/navigation/TabNavigator';
 import { VoiceTestScreen } from './src/components/voice/VoiceTestScreen';
+import DiaryWriteScreen from './src/components/screens/DiaryWriteScreen';
 import { theme } from './src/theme/theme';
 import { useAuthStore } from './src/store/authStore';
 
@@ -63,11 +64,11 @@ export default function App() {
     );
   }
 
-  // 임시로 음성 테스트 화면 표시 (테스트용)
+  // 임시로 일기 작성 화면 표시 (음성 녹음 테스트용)
   return (
     <>
       <StatusBar style="dark" />
-      <VoiceTestScreen />
+      <DiaryWriteScreen />
     </>
   );
 }

@@ -54,13 +54,43 @@ export class VoiceService {
         language: data.language,
         confidence: data.confidence,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('음성 업로드 및 변환 실패:', error);
       
+      // 네트워크 오류
+      if (!navigator.onLine) {
+        throw new Error('인터넷 연결을 확인해주세요.');
+      }
+      
+      // API 오류 상세 처리
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        switch (status) {
+          case 400:
+            throw new Error(data.message || '올바르지 않은 음성 파일입니다.');
+          case 401:
+            throw new Error('로그인이 필요합니다.');
+          case 413:
+            throw new Error('파일 크기가 너무 큽니다. (최대 25MB)');
+          case 422:
+            throw new Error('음성을 인식할 수 없습니다. 더 명확하게 말씀해주세요.');
+          case 429:
+            throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+          case 500:
+            throw new Error('서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+          default:
+            throw new Error(data.message || '음성 변환에 실패했습니다.');
+        }
+      }
+      
+      // 기존 에러가 있으면 그대로 전달
       if (error instanceof Error) {
         throw error;
       }
       
+      // 일반적인 오류
       throw new Error('음성을 텍스트로 변환할 수 없습니다. 네트워크 연결을 확인해주세요.');
     }
   }

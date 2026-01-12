@@ -15,6 +15,12 @@ export interface VoiceUploadResult {
   processingTimeMs: number;
   language?: string;
   confidence?: number;
+  qualityCheck?: {
+    isGoodQuality: boolean;
+    shouldRetry: boolean;
+    issues: string[];
+  };
+  attempts?: number;
 }
 
 export class VoiceFileManager {

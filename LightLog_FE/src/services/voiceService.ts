@@ -16,46 +16,188 @@ export interface VoiceUploadError {
 
 export class VoiceService {
   /**
-   * 음성 파일을 서버에 업로드하고 텍스트로 변환
+   * 음성 명령어를 텍스트로 변환하여 처리
    */
-  static async uploadAndTranscribe(audioUri: string): Promise<VoiceUploadResult> {
-    try {
-      // FormData 생성
-      const formData = new FormData();
-      
-      if (audioUri.startsWith('blob:')) {
-        // 웹에서 blob URI를 File 객체로 변환
-        const response = await fetch(audioUri);
-        const blob = await response.blob();
-        const file = new File([blob], 'voice_recording.m4a', { type: 'audio/m4a' });
-        formData.append('file', file);
-      } else {
-        // React Native에서 파일 업로드를 위한 설정
-        const fileInfo = {
-          uri: audioUri,
-          type: 'audio/m4a',
-          name: 'voice_recording.m4a',
+  static processVoiceCommands(text: string): string {
+    let processedText = text;
+    
+    // 줄바꿈 명령어들
+    const lineBreakCommands = [
+      '새 줄', '새줄', '줄바꿈', '줄 바꿈', '엔터', '다음줄', '다음 줄'
+    ];
+    
+    // 문단 바꿈 명령어들
+    const paragraphCommands = [
+      '문단 바꿈', '문단바꿈', '새 문단', '새문단', '단락 바꿈', '단락바꿈'
+    ];
+    
+    // 구두점 명령어들
+    const punctuationCommands = {
+      '마침표': '.',
+      '쉼표': ',',
+      '물음표': '?',
+      '느낌표': '!',
+      '콜론': ':',
+      '세미콜론': ';',
+      '따옴표': '"',
+      '작은따옴표': "'",
+      '괄호열어': '(',
+      '괄호닫아': ')',
+      '대괄호열어': '[',
+      '대괄호닫아': ']'
+    };
+    
+    // 줄바꿈 명령어 처리
+    lineBreakCommands.forEach(command => {
+      const regex = new RegExp(`\\s*${command}\\s*`, 'gi');
+      processedText = processedText.replace(regex, '\n');
+    });
+    
+    // 문단 바꿈 명령어 처리 (두 줄바꿈)
+    paragraphCommands.forEach(command => {
+      const regex = new RegExp(`\\s*${command}\\s*`, 'gi');
+      processedText = processedText.replace(regex, '\n\n');
+    });
+    
+    // 구두점 명령어 처리
+    Object.entries(punctuationCommands).forEach(([command, symbol]) => {
+      const regex = new RegExp(`\\s*${command}\\s*`, 'gi');
+      processedText = processedText.replace(regex, symbol + ' ');
+    });
+    
+    // 연속된 줄바꿈 정리 (3개 이상의 연속 줄바꿈을 2개로 제한)
+    processedText = processedText.replace(/\n{3,}/g, '\n\n');
+    
+    // 앞뒤 공백 정리
+    processedText = processedText.trim();
+    
+    // 구두점 앞의 불필요한 공백 제거
+    processedText = processedText.replace(/\s+([.,!?;:])/g, '$1');
+    
+    return processedText;
+  }
+  /**
+   * 변환된 텍스트 품질 검증
+   */
+  static evaluateTranscriptionQuality(text: string, confidence?: number): {
+    isGoodQuality: boolean;
+    shouldRetry: boolean;
+    issues: string[];
+  } {
+    const issues: string[] = [];
+    let isGoodQuality = true;
+    
+    // 신뢰도 점수 확인
+    if (confidence !== undefined && confidence < 0.7) {
+      issues.push('음성 인식 신뢰도가 낮습니다');
+      isGoodQuality = false;
+    }
+    
+    // 텍스트 길이 확인 (너무 짧으면 의미 있는 내용이 아닐 가능성)
+    if (text.trim().length < 3) {
+      issues.push('변환된 텍스트가 너무 짧습니다');
+      isGoodQuality = false;
+    }
+    
+    // 의미없는 반복 문자 확인
+    const repeatingPattern = /(.)\1{4,}/g;
+    if (repeatingPattern.test(text)) {
+      issues.push('반복되는 문자가 감지되었습니다');
+      isGoodQuality = false;
+    }
+    
+    // 특수문자만으로 구성되어 있는지 확인
+    const onlySpecialChars = /^[^\w\s가-힣]+$/g;
+    if (onlySpecialChars.test(text.trim())) {
+      issues.push('의미 있는 텍스트가 감지되지 않았습니다');
+      isGoodQuality = false;
+    }
+    
+    // 재시도 여부 결정 (심각한 품질 문제가 있는 경우에만)
+    const shouldRetry = issues.length >= 2 || (confidence !== undefined && confidence < 0.5);
+    
+    return {
+      isGoodQuality,
+      shouldRetry,
+      issues
+    };
+  }
+
+  /**
+   * 음성 파일을 서버에 업로드하고 텍스트로 변환 (자동 재시도 포함)
+   */
+  static async uploadAndTranscribe(audioUri: string, maxRetries: number = 2): Promise<VoiceUploadResult> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // FormData 생성
+        const formData = new FormData();
+        
+        if (audioUri.startsWith('blob:')) {
+          // 웹에서 blob URI를 File 객체로 변환
+          const response = await fetch(audioUri);
+          const blob = await response.blob();
+          const file = new File([blob], 'voice_recording.m4a', { type: 'audio/m4a' });
+          formData.append('file', file);
+        } else {
+          // React Native에서 파일 업로드를 위한 설정
+          const fileInfo = {
+            uri: audioUri,
+            type: 'audio/m4a',
+            name: 'voice_recording.m4a',
+          };
+          formData.append('file', fileInfo as any);
+        }
+
+        // API 호출
+        const response = await apiClient.post('/voice/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        const data: VoiceUploadResponse = response.data;
+        
+        // 품질 검증
+        const qualityCheck = this.evaluateTranscriptionQuality(
+          data.transcribedText, 
+          data.confidence
+        );
+        
+        // 품질이 좋지 않고 재시도할 수 있는 경우
+        if (!qualityCheck.isGoodQuality && qualityCheck.shouldRetry && attempt < maxRetries) {
+          console.warn(`음성 변환 품질 문제 (시도 ${attempt + 1}/${maxRetries + 1}):`, qualityCheck.issues);
+          lastError = new Error(`음성 품질 문제: ${qualityCheck.issues.join(', ')}`);
+          continue; // 재시도
+        }
+        
+        // 음성 명령어 처리를 적용
+        const processedText = this.processVoiceCommands(data.transcribedText);
+        
+        return {
+          transcribedText: processedText,
+          processingTimeMs: data.processingTimeMs,
+          language: data.language,
+          confidence: data.confidence,
+          qualityCheck: qualityCheck,
+          attempts: attempt + 1
         };
-        formData.append('file', fileInfo as any);
+      } catch (error: any) {
+        console.error(`음성 업로드 및 변환 실패 (시도 ${attempt + 1}/${maxRetries + 1}):`, error);
+        lastError = error;
+        
+        // 마지막 시도가 아니면 재시도
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // 점진적 지연
+          continue;
+        }
       }
-
-      // API 호출
-      const response = await apiClient.post('/voice/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const data: VoiceUploadResponse = response.data;
-      
-      return {
-        transcribedText: data.transcribedText,
-        processingTimeMs: data.processingTimeMs,
-        language: data.language,
-        confidence: data.confidence,
-      };
-    } catch (error: any) {
-      console.error('음성 업로드 및 변환 실패:', error);
+    }
+    
+    // 모든 시도 실패 시
+    if (lastError) {
+      console.error('모든 음성 변환 시도 실패:', lastError);
       
       // 네트워크 오류
       if (!navigator.onLine) {
@@ -63,9 +205,9 @@ export class VoiceService {
       }
       
       // API 오류 상세 처리
-      if (error.response) {
-        const status = error.response.status;
-        const data = error.response.data;
+      if (lastError.response) {
+        const status = lastError.response.status;
+        const data = lastError.response.data;
         
         switch (status) {
           case 400:
@@ -81,18 +223,18 @@ export class VoiceService {
           case 500:
             throw new Error('서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
           default:
-            throw new Error(data.message || '음성 변환에 실패했습니다.');
+            throw new Error(data.message || `음성 변환에 실패했습니다. (${maxRetries + 1}회 시도)`);
         }
       }
       
       // 기존 에러가 있으면 그대로 전달
-      if (error instanceof Error) {
-        throw error;
+      if (lastError instanceof Error) {
+        throw lastError;
       }
-      
-      // 일반적인 오류
-      throw new Error('음성을 텍스트로 변환할 수 없습니다. 네트워크 연결을 확인해주세요.');
     }
+    
+    // 일반적인 오류
+    throw new Error(`음성을 텍스트로 변환할 수 없습니다. (${maxRetries + 1}회 시도)`);
   }
 
   /**

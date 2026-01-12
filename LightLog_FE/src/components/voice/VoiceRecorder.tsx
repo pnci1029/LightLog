@@ -51,6 +51,9 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   
   // 애니메이션
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const waveAnimValues = useRef(
+    Array.from({ length: 5 }, () => new Animated.Value(0.3))
+  ).current;
 
   useEffect(() => {
     // 컴포넌트 마운트 시 오디오 설정
@@ -63,11 +66,13 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   }, []);
 
   useEffect(() => {
-    // 녹음 중일 때 맥박 애니메이션
+    // 녹음 중일 때 맥박 애니메이션과 파형 애니메이션
     if (state.isRecording && !state.isPaused) {
       startPulseAnimation();
+      startWaveAnimation();
     } else {
       stopPulseAnimation();
+      stopWaveAnimation();
     }
   }, [state.isRecording, state.isPaused]);
 
@@ -128,8 +133,46 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     Animated.timing(pulseAnim, {
       toValue: 1,
       duration: 300,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
+  };
+
+  const startWaveAnimation = () => {
+    const animations = waveAnimValues.map((anim, index) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 400 + (index * 100),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+          Animated.timing(anim, {
+            toValue: 0.3,
+            duration: 400 + (index * 100),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        ]),
+        { resetBeforeIteration: true }
+      );
+    });
+
+    // 각 웨이브를 순차적으로 시작하여 파동 효과 생성
+    animations.forEach((animation, index) => {
+      setTimeout(() => {
+        animation.start();
+      }, index * 200);
+    });
+  };
+
+  const stopWaveAnimation = () => {
+    waveAnimValues.forEach(anim => {
+      anim.stopAnimation();
+      Animated.timing(anim, {
+        toValue: 0.3,
+        duration: 200,
+        useNativeDriver: Platform.OS !== 'web',
+      }).start();
+    });
   };
 
   const startRecording = async () => {
@@ -348,16 +391,81 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     <View style={styles.container}>
       {/* 녹음 시간 표시 */}
       <View style={styles.durationContainer}>
-        <Text style={styles.durationText}>
-          {formatDuration(state.duration)}
-        </Text>
+        <View style={styles.durationWrapper}>
+          <Text style={styles.durationLabel}>
+            {state.isRecording 
+              ? (state.isPaused ? '일시정지' : '녹음 중') 
+              : state.recordingUri 
+                ? '완료됨'
+                : '준비'
+            }
+          </Text>
+          <Text style={[
+            styles.durationText,
+            state.isRecording && !state.isPaused && styles.durationTextActive
+          ]}>
+            {formatDuration(state.duration)}
+          </Text>
+          {maxDuration > 0 && (
+            <Text style={styles.maxDurationText}>
+              / {formatDuration(maxDuration)}
+            </Text>
+          )}
+        </View>
         {state.isRecording && !state.isPaused && (
-          <View style={styles.recordingIndicator} />
+          <Animated.View 
+            style={[
+              styles.recordingIndicator,
+              { opacity: pulseAnim.interpolate({
+                inputRange: [1, 1.2],
+                outputRange: [0.5, 1],
+                extrapolate: 'clamp'
+              })}
+            ]} 
+          />
         )}
       </View>
+      
+      {/* 진행률 바 (녹음 중일 때만 표시) */}
+      {state.isRecording && maxDuration > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <Animated.View 
+              style={[
+                styles.progressFill,
+                { 
+                  width: `${(state.duration / maxDuration) * 100}%`,
+                  backgroundColor: state.duration / maxDuration > 0.8 
+                    ? theme.error 
+                    : state.duration / maxDuration > 0.6 
+                      ? '#ff9500' 
+                      : theme.main
+                }
+              ]} 
+            />
+          </View>
+        </View>
+      )}
 
       {/* 녹음 버튼 */}
       <View style={styles.controlsContainer}>
+        {/* 파형 애니메이션 */}
+        {state.isRecording && !state.isPaused && (
+          <View style={styles.waveContainer}>
+            {waveAnimValues.map((anim, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.waveBar,
+                  {
+                    transform: [{ scaleY: anim }],
+                  },
+                ]}
+              />
+            ))}
+          </View>
+        )}
+        
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
           <TouchableOpacity
             style={[
@@ -375,6 +483,23 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
             />
           </TouchableOpacity>
         </Animated.View>
+        
+        {/* 오른쪽 파형 애니메이션 */}
+        {state.isRecording && !state.isPaused && (
+          <View style={[styles.waveContainer, styles.waveContainerRight]}>
+            {waveAnimValues.map((anim, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.waveBar,
+                  {
+                    transform: [{ scaleY: anim }],
+                  },
+                ]}
+              />
+            ))}
+          </View>
+        )}
 
         {/* 중지 버튼 (녹음 중일 때만 표시) */}
         {state.isRecording && (
@@ -431,14 +556,36 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   durationContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
+  durationWrapper: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 8,
+  },
+  durationLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: theme.textSecondary,
+    marginRight: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   durationText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '600',
     color: theme.text,
+    fontVariant: ['tabular-nums'],
+  },
+  durationTextActive: {
+    color: theme.main,
+  },
+  maxDurationText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: theme.textSecondary,
+    marginLeft: 4,
     fontVariant: ['tabular-nums'],
   },
   recordingIndicator: {
@@ -446,8 +593,23 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: theme.error,
-    marginLeft: 10,
-    opacity: 0.8,
+    marginTop: 4,
+  },
+  progressContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: theme.background,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+    transition: 'width 0.3s ease',
   },
   controlsContainer: {
     flexDirection: 'row',
@@ -499,5 +661,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.textSecondary,
     textAlign: 'center',
+  },
+  waveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    left: -40,
+  },
+  waveContainerRight: {
+    left: 'auto',
+    right: -40,
+  },
+  waveBar: {
+    width: 3,
+    height: 20,
+    backgroundColor: theme.main,
+    marginHorizontal: 1,
+    borderRadius: 1.5,
+    opacity: 0.7,
   },
 });

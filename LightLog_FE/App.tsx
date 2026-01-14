@@ -5,6 +5,7 @@ import AuthScreen from './src/components/auth/AuthScreen';
 import TabNavigator from './src/components/navigation/TabNavigator';
 import { theme } from './src/theme/theme';
 import { useAuthStore } from './src/store/authStore';
+import notificationService from './src/services/notificationService';
 
 export default function App() {
   // --- State Management ---
@@ -20,6 +21,11 @@ export default function App() {
       try {
         // 인증 상태 확인
         await checkAuthStatus();
+        
+        // 알림 서비스 초기화 (백그라운드에서)
+        notificationService.initialize().catch(error => 
+          console.warn('알림 서비스 초기화 실패:', error)
+        );
       } catch (e) {
         console.error('앱 초기화 중 오류 발생:', e);
       } finally {

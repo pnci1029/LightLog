@@ -155,7 +155,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigateToSearch, onN
   };
 
   const handleNotificationSettings = () => {
-    Alert.alert('준비중', '알림 설정 기능이 곧 추가될 예정입니다.');
+    if (onNavigateToNotifications) {
+      onNavigateToNotifications();
+    } else {
+      Alert.alert('준비중', '알림 설정 기능이 곧 추가될 예정입니다.');
+    }
   };
 
   const handlePrivacyPolicy = () => {
